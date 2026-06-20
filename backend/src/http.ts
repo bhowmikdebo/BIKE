@@ -25,3 +25,9 @@ export function authCallbackUrl(request: Request, origin: string, path: string) 
   }
   return new URL(path, `http://${host}`).href
 }
+
+export function resourceId(request: Request, parameter = 'id') {
+  const id = request.params[parameter]
+  if (typeof id !== 'string' || !/^[a-z0-9-]{1,90}$/i.test(id)) throw new HttpError(404, 'Bike or booking not found.')
+  return id
+}
