@@ -1,5 +1,6 @@
 export type Category = 'Sports Bikes' | 'Cruisers' | 'Scooters' | 'Adventure Bikes' | 'Commuter Bikes'
 export type Transmission = 'Manual' | 'Automatic'
+export type OperatorScope = 'admin' | 'host'
 
 export interface HostIdentity {
   name: string
