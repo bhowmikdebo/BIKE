@@ -10,7 +10,7 @@
     "start": "node --env-file-if-exists=.env src/index.ts",
     "dev": "node --env-file-if-exists=.env --watch src/index.ts",
     "typecheck": "tsc --noEmit",
-    "test": "node --test src/app.test.ts"
+    "test": "node --test \"tests/api/*.test.ts\""
   },
   "dependencies": {
     "@supabase/supabase-js": "2.119.2",
