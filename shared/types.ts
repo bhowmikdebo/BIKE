@@ -15,6 +15,26 @@ export interface HostStorefront {
   bikes: Bike[]
 }
 
+export interface BikeRating {
+  average: number | null
+  count: number
+}
+
+export interface BikeReview {
+  id: string
+  bikeId: string
+  bikeName: string
+  author: string
+  rating: number
+  body: string
+  createdAt: string
+}
+
+export interface BikeReviewPage {
+  items: BikeReview[]
+  hasMore: boolean
+}
+
 export interface Bike {
   id: string
   brand: string
@@ -31,6 +51,7 @@ export interface Bike {
   features: string[]
   imageUrl?: string
   host?: HostIdentity | null
+  rating?: BikeRating
 }
 
 export interface RentalSearch {
@@ -54,7 +75,7 @@ export interface ManagedBike extends Bike {
   pickupInstructions?: string
 }
 
-export interface BikeInput extends Omit<Bike, 'id' | 'host'> {
+export interface BikeInput extends Omit<Bike, 'id' | 'host' | 'rating'> {
   active: boolean
   image?: string | null
   pickupInstructions?: string
@@ -90,6 +111,24 @@ export interface BookingRecord extends RentalSearch {
   total: number
   status: BookingStatus
   createdAt: string
+  reviewed?: boolean
+}
+
+export type BookingNotificationKind = 'requested' | 'confirmed' | 'cancelled' | 'completed' | 'pickup_reminder' | 'return_reminder'
+
+export interface BookingNotification {
+  id: string
+  bookingId: string
+  bikeName: string
+  scope: 'rider' | 'host' | 'admin'
+  kind: BookingNotificationKind
+  createdAt: string
+  read: boolean
+}
+
+export interface NotificationInbox {
+  items: BookingNotification[]
+  unread: number
 }
 
 export interface BookingQuote {
