@@ -90,6 +90,20 @@ export function bookingInput(value: unknown): BookingInput {
   }
 }
 
+export function reviewInput(value: unknown) {
+  const raw = object(value)
+  const rating = integer(raw.rating, 'Rating', 1, 5)
+  const body = typeof raw.body === 'string' ? raw.body.trim() : ''
+  if (body.length < 10 || body.length > 600) throw new HttpError(400, 'Write a review of 10 to 600 characters.')
+  return { rating, body }
+}
+
+export function reviewPage(value: unknown) {
+  if (value === undefined) return 1
+  if (typeof value !== 'string' || !/^[1-9][0-9]{0,5}$/.test(value)) throw new HttpError(400, 'Invalid review page.')
+  return Number(value)
+}
+
 function imageUrl(value: unknown) {
   const url = text(value, 'Image URL', 400, true)
   if (!url || /^\/images\/[a-z\d-]+\.webp$/i.test(url)) return url
