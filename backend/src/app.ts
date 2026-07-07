@@ -7,7 +7,7 @@ import { mountAccountEntry } from './auth-entry.ts'
 import { checkOrigin, HttpError } from './http.ts'
 import { mountPasswordRecovery } from './recovery.ts'
 import type { SupabaseGateway } from './supabase.ts'
-import { accountEmail, bikeInput, blockedDates, bookingInput, hostProfile, object, password, rental, uploadedImage } from './validation.ts'
+import { accountEmail, bikeInput, blockedDates, bookingInput, hostProfile, object, password, rental, reviewInput, reviewPage, uploadedImage } from './validation.ts'
 
 function resourceId(request: Request, parameter = 'id') {
   const id = request.params[parameter]
@@ -73,6 +73,12 @@ export function createApp(gateway: SupabaseGateway, { origin = '', frontendDir =
   router.get('/bikes', async (request, response) => {
     response.json(await gateway.rpc('catalog', { ...rental(request.query, false) }))
   })
+  router.get('/reviews', async (_request, response) => {
+    response.json(await gateway.rpc('recentReviews'))
+  })
+  router.get('/bikes/:id/reviews', async (request, response) => {
+    response.json(await gateway.rpc('bikeReviews', { id: resourceId(request), page: reviewPage(request.query.page) }))
+  })
   router.get('/bikes/:id/availability', async (request, response) => {
     response.json(await gateway.rpc('quote', { ...rental(request.query, true), bikeId: resourceId(request) }))
   })
@@ -98,6 +104,20 @@ export function createApp(gateway: SupabaseGateway, { origin = '', frontendDir =
   router.patch('/bookings/:id/status', smallJson, async (request, response) => {
     const { token } = await sessions.requireRole(request, response, 'customer')
     response.json(await gateway.rpc('status', { id: resourceId(request), status: object(request.body).status, scope: 'rider' }, token))
+  })
+  router.post('/bookings/:id/review', smallJson, async (request, response) => {
+    const { token } = await sessions.requireRole(request, response, 'customer')
+    response.status(201).json(await gateway.rpc('reviewBooking', { id: resourceId(request), ...reviewInput(request.body) }, token))
+  })
+
+  router.get('/notifications', async (request, response) => {
+    const { token } = await sessions.requireAccount(request, response)
+    response.json(await gateway.rpc('notifications', {}, token))
+  })
+  router.patch(['/notifications/read', '/notifications/:id/read'], async (request, response) => {
+    const { token } = await sessions.requireAccount(request, response)
+    const args = request.params.id === undefined ? {} : { id: resourceId(request) }
+    response.json(await gateway.rpc('readNotifications', args, token))
   })
 
   router.put('/host/profile', smallJson, async (request, response) => {
