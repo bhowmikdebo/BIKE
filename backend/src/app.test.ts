@@ -98,6 +98,23 @@ test('Express forwards validated requests with the current rider identity and pr
   assert.equal(placed.status, 201)
   assert.deepEqual(calls.at(-1), { name: 'book', args: booking, token: 'customer' })
 
+  assert.equal((await request('/api/notifications')).status, 401)
+  assert.equal((await request('/api/notifications', 'GET', undefined, rider)).status, 200)
+  assert.deepEqual(calls.at(-1), { name: 'notifications', args: {}, token: 'customer' })
+  const notificationId = randomUUID()
+  assert.equal((await request(`/api/notifications/${notificationId}/read`, 'PATCH', undefined, rider)).status, 200)
+  assert.deepEqual(calls.at(-1), { name: 'readNotifications', args: { id: notificationId }, token: 'customer' })
+  assert.equal((await request('/api/notifications/read', 'PATCH', undefined, rider)).status, 200)
+  assert.deepEqual(calls.at(-1), { name: 'readNotifications', args: {}, token: 'customer' })
+  assert.equal((await request('/api/bikes/classic-350/reviews?page=0')).status, 400)
+  assert.equal((await request('/api/bikes/classic-350/reviews?page=2')).status, 200)
+  assert.deepEqual(calls.at(-1), { name: 'bikeReviews', args: { id: 'classic-350', page: 2 }, token: undefined })
+  const review = { rating: 5, body: 'A good ride and easy pickup.' }
+  assert.equal((await request('/api/bookings/RD-TEST/review', 'POST', review, admin)).status, 403)
+  assert.equal((await request('/api/bookings/RD-TEST/review', 'POST', { ...review, rating: 6 }, rider)).status, 400)
+  assert.equal((await request('/api/bookings/RD-TEST/review', 'POST', { ...review, id: 'other-booking' }, rider)).status, 201)
+  assert.deepEqual(calls.at(-1), { name: 'reviewBooking', args: { ...review, id: 'RD-TEST' }, token: 'customer' })
+
   const refreshed = await request('/api/session', 'GET', undefined, 'rideon_refresh=refresh-customer')
   assert.equal((await refreshed.json() as Account).role, 'customer')
   assert.match(cookies(refreshed), /rideon_access=customer/)
