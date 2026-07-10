@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { api, errorMessage } from '../utils/api'
 
 type Result<T> = { path: string; data?: T; error?: string }
@@ -6,6 +6,7 @@ type Result<T> = { path: string; data?: T; error?: string }
 export function useApi<T>(path: string | null) {
   const [result, setResult] = useState<Result<T>>()
   const [version, setVersion] = useState(0)
+  const refresh = useCallback(() => setVersion(value => value + 1), [])
 
   useEffect(() => {
     if (!path) return
@@ -21,6 +22,7 @@ export function useApi<T>(path: string | null) {
     data: visible?.data,
     error: visible?.error,
     loading: Boolean(path && !visible),
-    reload: () => { setResult(undefined); setVersion(value => value + 1) },
+    refresh,
+    reload: () => { setResult(undefined); refresh() },
   }
 }
