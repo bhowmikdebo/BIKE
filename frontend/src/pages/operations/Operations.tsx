@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { CalendarDays, Plus, Search } from 'lucide-react'
+import { useLocation } from 'react-router'
 import { ReservationCard, statusLabels } from '../../components/ReservationCard'
 import { AsyncState, Dialog, ImageAsset } from '../../components/ui'
 import { bikeImage, bikeName } from '../../../../shared/fleet.ts'
@@ -84,6 +85,8 @@ export function BookingManager({ scope }: { scope: OperatorScope }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const { hash, key } = useLocation()
+  useEffect(() => { if (hash.startsWith('#booking-')) setFilter('') }, [hash, key])
   const filtered = bookings.data?.filter(booking => !filter || booking.status === filter)
 
   async function update() {
