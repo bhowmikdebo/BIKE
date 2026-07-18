@@ -1,7 +1,6 @@
 import { useId, useLayoutEffect, useRef } from 'react'
 import type { ImgHTMLAttributes, ReactNode } from 'react'
 import { Bike, X } from 'lucide-react'
-import { motion, useReducedMotion } from 'motion/react'
 import { Link } from 'react-router'
 
 export function Wordmark() {
@@ -13,11 +12,6 @@ export function SectionHeading({ kicker, title, description, action }: { kicker?
     <div>{kicker && <p className="eyebrow">{kicker}</p>}<h2>{title}</h2>{description && <p className="section-description">{description}</p>}</div>
     {action}
   </div>
-}
-
-export function Reveal({ children, className }: { children: ReactNode; className?: string }) {
-  const reduced = useReducedMotion()
-  return <motion.div className={className} initial={reduced ? false : { opacity: .76, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: .12 }} transition={{ duration: .38 }}>{children}</motion.div>
 }
 
 export function ImageAsset({ onError, ...props }: ImgHTMLAttributes<HTMLImageElement>) {
