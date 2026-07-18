@@ -1,15 +1,25 @@
+import type { ReactNode } from 'react'
 import { ChevronDown, Play } from 'lucide-react'
 import { Link } from 'react-router'
-import { motion, useReducedMotion } from 'motion/react'
-import { BikeGrid } from '../components/BikeCard'
-import { ReviewCards } from '../components/Reviews'
-import { SearchBar } from '../components/Search'
-import { AsyncState, ImageAsset, Reveal, SectionHeading } from '../components/ui'
+import { LazyMotion, domAnimation, useReducedMotion } from 'motion/react'
+import * as m from 'motion/react-m'
+import { BikeGrid } from '../features/catalog/BikeCard'
+import { ReviewCards } from '../features/reviews/Reviews'
+import { SearchBar } from '../features/catalog/Search'
+import { AsyncState, ImageAsset, SectionHeading } from '../components/ui'
 import { benefits, faqs, steps } from '../data/content'
 import { categories } from '../../../shared/fleet.ts'
 import { useApi } from '../hooks/api'
 import type { Bike, BikeReview } from '../../../shared/types.ts'
 import { searchString } from '../../../shared/rental.ts'
+
+function Reveal({ children, className }: { children: ReactNode; className?: string }) {
+  const reduced = useReducedMotion()
+  return <m.div className={className} initial={reduced ? false : { opacity: .76, y: 12 }}
+    whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: .12 }} transition={{ duration: .38 }}>
+    {children}
+  </m.div>
+}
 
 function Hero() {
   const reduced = useReducedMotion()
@@ -19,12 +29,12 @@ function Hero() {
       <ImageAsset src="/images/hero.webp" alt="" width={1920} height={800} fetchPriority="high" />
     </picture>
     <div className="container hero-inner">
-      <motion.div className="hero-copy" initial={reduced ? false : { opacity: .7, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .48 }}>
+      <m.div className="hero-copy" initial={reduced ? false : { opacity: .7, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .48 }}>
         <p className="eyebrow hero-eyebrow">Motorcycle & scooter rentals</p>
         <h1 id="home-title">Your Ride.<br /><em>Your Rules.</em></h1>
         <p className="hero-description">Discover the freedom of the open road. Rent premium bikes, explore new places, and ride on your own terms.</p>
         <div className="flex flex-wrap gap-3 hero-actions"><Link to="/bikes" className="button primary">Explore Bikes</Link><Link to="/#how-it-works" className="button light-outline"><Play size={16} />How It Works</Link></div>
-      </motion.div>
+      </m.div>
     </div>
   </section>
 }
@@ -44,7 +54,7 @@ export function Home() {
   const fleet = useApi<Bike[]>('/api/bikes')
   const reviews = useApi<BikeReview[]>('/api/reviews')
   const cities = fleet.data ? [...new Set(fleet.data.flatMap(bike => bike.cities))].sort() : undefined
-  return <>
+  return <LazyMotion features={domAnimation} strict>
     <Hero />
     <div className="container home-search"><SearchBar integrated cityOptions={cities} /></div>
     <CategorySection />
@@ -80,5 +90,5 @@ export function Home() {
         <summary>{faq.question}<ChevronDown size={20} /></summary><p>{faq.answer}</p>
       </details>)}</div>
     </div></section>
-  </>
+  </LazyMotion>
 }
