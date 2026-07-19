@@ -1,0 +1,57 @@
+.notification-bell { position: relative; }
+.notification-bell > span { position: absolute; top: 0; right: 0; min-width: 17px; height: 17px; padding-inline: 3px; display: grid; place-items: center; border-radius: 20px; background: var(--accent); color: var(--accent-ink); font-size: .68rem; font-weight: 750; }
+.notification-dialog { width: min(calc(100% - 24px), 520px); white-space: normal; }
+.notification-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 11px; color: var(--muted); font-size: .875rem; }
+.notification-toolbar .text-button { color: var(--accent-text); }
+.notification-empty { color: var(--muted); padding-block: 10px; }
+.notification-list { display: grid; gap: 6px; max-height: min(56dvh, 470px); overflow: auto; padding: 4px; margin: -4px; }
+.notification-item { display: flex; gap: 12px; align-items: flex-start; padding: 12px; border: 1px solid var(--line); border-radius: 8px; }
+.notification-item:hover { background: var(--soft); }
+.notification-item[data-unread="true"] { background: var(--accent-soft); border-color: var(--accent-line); }
+.notification-item:focus-visible { outline-offset: -3px; }
+.notification-icon { display: grid; width: 33px; height: 33px; place-items: center; background: var(--surface); color: var(--accent-text); border-radius: 7px; flex: none; }
+.notification-copy { display: grid; min-width: 0; gap: 3px; overflow-wrap: anywhere; }
+.notification-copy strong { font-size: .9375rem; }
+.notification-copy :is(span, time) { color: var(--muted); font-size: .8125rem; }
+.notification-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-text); margin: 6px 0 0 auto; flex: none; }
+.reservation-card[id] { scroll-margin-top: calc(var(--header-height) + 16px); }
+.reservation-card[data-targeted="true"] { border-color: var(--accent-text); }
+
+.rating-summary { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: .875rem; }
+.rating-summary strong { color: var(--ink); }
+.review-star, .review-stars, .review-star-input { color: var(--accent-text); }
+.bike-card .rating-summary { margin-bottom: 8px; }
+.detail-review-link { display: inline-flex; margin: 0 0 16px 12px; }
+.detail-review-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.review-cards { display: grid; gap: 13px; }
+.reviews-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.review-cards figure { display: grid; grid-template-rows: auto 1fr auto; min-width: 0; gap: 13px; padding: 17px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.review-stars { display: flex; gap: 4px; }
+.review-cards blockquote { overflow-wrap: anywhere; white-space: pre-wrap; line-height: 1.55; }
+.review-cards figcaption { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; border-top: 1px solid var(--line); padding-top: 10px; font-size: .875rem; }
+.review-cards figcaption time { display: block; color: var(--muted); font-size: .8125rem; }
+.review-cards figcaption a { color: var(--accent-text); text-decoration: underline; text-underline-offset: 3px; }
+.review-pagination { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 13px; color: var(--muted); font-size: .875rem; }
+.review-fieldset { min-inline-size: 0; }
+.review-fieldset legend { margin-bottom: 6px; font-size: .875rem; font-weight: 650; }
+.review-rating-input { display: flex; flex-wrap: wrap; gap: 5px; }
+.review-rating-input label { cursor: pointer; }
+.review-star-input { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 7px; border: 1px solid var(--control-line); }
+.review-rating-input label:hover .review-star-input, .review-rating-input input:checked ~ .review-star-input { background: var(--accent-soft); }
+.review-rating-input input:focus-visible ~ .review-star-input { outline: 2px solid var(--accent-text); outline-offset: 2px; }
+
+@media (min-width: 1281px) and (max-width: 1440px) {
+  .nav-bar { gap: 22px; }
+  .desktop-nav { gap: 17px; }
+  .nav-actions { gap: 8px; }
+}
+@media (max-width: 640px) {
+  .reviews-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 410px) {
+  .nav-bar { gap: 7px; }
+  .nav-actions { gap: 3px; }
+  .nav-actions > .icon-button { width: 36px; }
+  .nav-bar .wordmark { font-size: 1.45rem; gap: 6px; }
+  .nav-bar .wordmark-icon { width: 30px; height: 30px; }
+}
