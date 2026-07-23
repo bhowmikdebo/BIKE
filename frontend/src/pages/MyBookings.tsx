@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { CheckCircle2 } from 'lucide-react'
 import { Link, useLocation } from 'react-router'
 import { ReservationCard } from '../components/ReservationCard'
+import { LeaveReview } from '../components/Reviews'
 import { AsyncState, Dialog, EmptyState } from '../components/ui'
 import { useApi } from '../hooks/api'
 import { useAuth } from '../hooks/auth'
@@ -14,6 +15,7 @@ export function MyBookings() {
   const { state } = useLocation()
   const bookings = useApi<BookingRecord[]>('/api/bookings')
   const [cancel, setCancel] = useState<BookingRecord>()
+  const [review, setReview] = useState<BookingRecord>()
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
@@ -43,6 +45,8 @@ export function MyBookings() {
         !bookings.data.length ? <EmptyState title="Your bookings will appear here" description="Find a bike and select your dates to request a rental." action={<Link className="button primary" to="/bikes">Explore Bikes</Link>} /> :
           <div className="reservation-grid">{bookings.data.map(booking => <ReservationCard key={booking.id} booking={booking}>
             {['pending', 'confirmed'].includes(booking.status) && booking.pickup >= today() && <button className="button button-outline" type="button" onClick={() => { setError(''); setCancel(booking) }}>Cancel booking</button>}
+            {booking.status === 'completed' && (booking.reviewed ? <p className="small-note">Review published</p> :
+              <button className="button button-outline" type="button" onClick={() => setReview(booking)}>Leave a review</button>)}
           </ReservationCard>)}</div>}
     </section>
     {cancel && <Dialog title="Cancel this booking?" onClose={() => { if (!busy) setCancel(undefined) }}><div className="dialog-body">
@@ -50,5 +54,10 @@ export function MyBookings() {
       {error && <p role="alert" className="field-error">{error}</p>}
       <div className="portal-actions"><button className="button button-outline" disabled={busy} onClick={() => setCancel(undefined)}>Keep booking</button><button className="button primary" disabled={busy} onClick={cancelBooking}>{busy ? 'Cancelling…' : 'Cancel booking'}</button></div>
     </div></Dialog>}
+    {review && <LeaveReview booking={review} onClose={() => setReview(undefined)} onPublish={() => {
+      setReview(undefined)
+      setMessage('Your review was published.')
+      bookings.reload()
+    }} />}
   </>
 }
