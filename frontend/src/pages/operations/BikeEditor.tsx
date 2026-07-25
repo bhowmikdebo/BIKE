@@ -2,9 +2,8 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Dialog, ImageAsset } from '../../components/ui'
 import { categories, cities } from '../../../../shared/fleet.ts'
-import type { BikeInput, ManagedBike } from '../../../../shared/types.ts'
+import type { BikeInput, ManagedBike, OperatorScope } from '../../../../shared/types.ts'
 import { api, errorMessage } from '../../utils/api'
-import type { OperatorScope } from './Operations'
 
 const uploadLimit = 2 * 1024 * 1024
 const uploadTypes = ['image/jpeg', 'image/png', 'image/webp']
