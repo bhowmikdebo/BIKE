@@ -5,6 +5,7 @@ import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'reac
 import { BikeGrid } from '../components/BikeCard'
 import { PriceBreakdown } from '../components/Booking'
 import { HostLink } from '../components/HostLink'
+import { BikeReviews, RatingSummary } from '../components/Reviews'
 import { useAuth } from '../hooks/auth'
 import { DateSelector } from '../components/Search'
 import { AsyncState, EmptyState, ImageAsset, SectionHeading } from '../components/ui'
@@ -89,7 +90,9 @@ function BikeDetail({ bike, initial, bikes }: { bike: Bike; initial: RentalSearc
   const otherBikes = bikes.filter(item => item.id !== bike.id).sort((a, b) => Number(b.category === bike.category) - Number(a.category === bike.category)).slice(0, 3)
   return <div className="container details-shell">
     <nav aria-label="Breadcrumbs" className="breadcrumbs"><Link to="/">Home</Link><ChevronRight size={15} /><Link to={`/bikes${searchString(rentalSearch(initial))}`}>Explore Bikes</Link><ChevronRight size={15} /><span>{bike.model}</span></nav>
-    <div className="details-heading"><p className="eyebrow">{bike.category}</p><h1>{bikeName(bike)}</h1><HostLink host={bike.host} /></div>
+    <div className="details-heading"><p className="eyebrow">{bike.category}</p><h1>{bikeName(bike)}</h1><HostLink host={bike.host} />
+      <a className="detail-review-link" href="#bike-reviews"><RatingSummary rating={bike.rating} /></a>
+    </div>
     <div className="details-layout grid">
       <Gallery bike={bike} />
       <RentalPanel bike={bike} initial={initial} />
@@ -98,6 +101,7 @@ function BikeDetail({ bike, initial, bikes }: { bike: Bike; initial: RentalSearc
         <section><h2>Specifications</h2><dl className="spec-grid grid">{specs.map(({ icon: Icon, label, value }) => <div key={label}><Icon size={20} /><dt>{label}</dt><dd>{value}</dd></div>)}</dl><p className="small-note">Specifications and mileage are illustrative. Model variants may differ.</p></section>
         <section><h2>Features</h2><ul className="check-list">{bike.features.map(feature => <li key={feature}><Check size={17} />{feature}</li>)}</ul></section>
         <section className="rental-note"><CalendarDays size={23} /><div><h2>Rental information</h2><p>Rentals are priced in full days. Review your dates and total before you submit. Check My Bookings for your request status and pickup details.</p></div></section>
+        <BikeReviews bikeId={bike.id} />
       </div>
     </div>
     <section className="related-bikes"><SectionHeading title="More bikes to explore" /><BikeGrid bikes={otherBikes} query={searchString(rentalSearch(initial))} /></section>
