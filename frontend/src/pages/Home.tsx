@@ -1,13 +1,14 @@
-import { ChevronDown, Play, Quote } from 'lucide-react'
+import { ChevronDown, Play } from 'lucide-react'
 import { Link } from 'react-router'
 import { motion, useReducedMotion } from 'motion/react'
 import { BikeGrid } from '../components/BikeCard'
+import { ReviewCards } from '../components/Reviews'
 import { SearchBar } from '../components/Search'
 import { AsyncState, ImageAsset, Reveal, SectionHeading } from '../components/ui'
-import { benefits, faqs, reviews, steps } from '../data/content'
+import { benefits, faqs, steps } from '../data/content'
 import { categories } from '../../../shared/fleet.ts'
 import { useApi } from '../hooks/api'
-import type { Bike } from '../../../shared/types.ts'
+import type { Bike, BikeReview } from '../../../shared/types.ts'
 import { searchString } from '../../../shared/rental.ts'
 
 function Hero() {
@@ -41,6 +42,7 @@ function CategorySection() {
 
 export function Home() {
   const fleet = useApi<Bike[]>('/api/bikes')
+  const reviews = useApi<BikeReview[]>('/api/reviews')
   const cities = fleet.data ? [...new Set(fleet.data.flatMap(bike => bike.cities))].sort() : undefined
   return <>
     <Hero />
@@ -68,13 +70,10 @@ export function Home() {
       <ImageAsset src="/images/open-road.webp" width={1600} height={800} alt="" loading="lazy" />
       <div className="container"><h2>Every Great Journey<br className="hidden sm:block" /> Starts With a Ride.</h2><Link to="/bikes" className="button primary">Explore Bikes</Link></div>
     </section>
-    <section className="container home-section reviews-section">
-      <SectionHeading kicker="DEMO REVIEWS" title="A few rides imagined" description="Illustrative reviews from fictional riders." />
-      <div className="reviews-grid grid">{reviews.map(review => <figure key={review.name}>
-        <Quote className="quote-icon" size={27} /><blockquote>“{review.quote}”</blockquote>
-        <figcaption><span className="review-avatar" aria-hidden="true">{review.name.slice(0, 1)}</span><span><strong>{review.name}</strong><small>{review.location}</small></span></figcaption>
-      </figure>)}</div>
-    </section>
+    {!!reviews.data?.length && <section className="container home-section reviews-section">
+      <SectionHeading title="Verified rental reviews" />
+      <ReviewCards reviews={reviews.data} showBike />
+    </section>}
     <section className="faq-band"><div className="container home-section faq-layout grid">
       <div><SectionHeading kicker="BEFORE YOU RIDE" title="Good to know." description="Pickup policies are illustrative while RIDEON completes its operating terms." /><Link className="faq-contact" to="/contact">Contact us</Link></div>
       <div className="faq-list">{faqs.map(faq => <details className="faq-item" key={faq.question} name="rental-faq">
