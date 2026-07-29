@@ -12,11 +12,6 @@ export const steps = [
   { icon: ClipboardList, title: 'Choose your dates', detail: 'Set your pickup and return days to check availability and review your rental cost.' },
   { icon: KeyRound, title: 'Start your journey', detail: 'Submit a booking request and check your portal for confirmation before pickup.' },
 ]
-export const reviews = [
-  { name: 'Aarav M.', location: 'Goa weekend', quote: 'I’d pick the Classic for the coast. Seeing the whole weekend cost up front made it easy to plan the trip.' },
-  { name: 'Nisha R.', location: 'Bengaluru city ride', quote: 'I liked that I could filter for an automatic and get straight to the scooters. That’s all I needed for the day.' },
-  { name: 'Kabir S.', location: 'Jaipur road trip', quote: 'Comparing the Himalayan and Classic side by side helped me decide which one fit the route.' },
-]
 export const faqs = [
   { question: 'What documents are required to rent a bike?', answer: 'A rental provider may ask for a valid driving licence and government-issued ID. Specific document checks would be listed before a live booking.' },
   { question: 'Is a driving license necessary?', answer: 'Expect to provide a valid licence covering the class of vehicle you want to ride. Confirm the applicable requirements with the rental provider before pickup.' },
