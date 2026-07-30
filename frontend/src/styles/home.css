@@ -41,14 +41,6 @@
 .road-banner .container { padding-block: 50px; }
 .road-banner h2 { font-size: clamp(2.55rem, 6.6vw, 6.25rem); max-width: 12ch; line-height: .95; }
 .road-banner .button { margin-top: 22px; }
-.reviews-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 15px; }
-.reviews-grid figure { display: flex; flex-direction: column; gap: 15px; margin: 0; padding: 21px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface); }
-.quote-icon { color: var(--accent-text); }
-.reviews-grid blockquote { line-height: 1.55; flex: 1; }
-.reviews-grid figcaption { display: flex; align-items: center; gap: 9px; border-top: 1px solid var(--line); padding-top: 14px; }
-.reviews-grid figcaption strong, .reviews-grid figcaption small { display: block; }
-.reviews-grid figcaption small { color: var(--muted); }
-.review-avatar { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--accent-soft); font-weight: 700; }
 .faq-band { background: var(--soft); border-top: 1px solid var(--line); }
 .faq-layout { grid-template-columns: .85fr 1.15fr; gap: 30px; }
 .faq-layout .section-heading { display: block; }
@@ -85,7 +77,7 @@
   .category-card:last-child { grid-column: 1/-1; max-height: 175px; }
   .category-card:last-child img { object-position: 50% 61%; }
   .benefits-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; }
-  .steps-grid, .reviews-grid, .faq-layout { grid-template-columns: 1fr; }
+  .steps-grid, .faq-layout { grid-template-columns: 1fr; }
   .faq-layout { gap: 19px; }
   .faq-layout .section-heading { margin-bottom: 12px; }
   .road-banner { min-height: 350px; }
