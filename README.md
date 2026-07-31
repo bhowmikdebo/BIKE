@@ -2,9 +2,9 @@
 
 RIDEON is a two-sided motorcycle and scooter rental marketplace. Riders request available bikes, and independent hosts publish listings and manage their own rentals. One account can do both.
 
-- `frontend/` contains the React and TypeScript site, Vite configuration, and image assets.
-- `backend/` contains the Node.js and Express API, Supabase integration, and database migrations.
-- `shared/` contains the cross-app types, rental date rules, and fleet seed data.
+- `frontend/src/app/` contains the React routes and shared layout. `frontend/src/features/` groups account, catalog, reservation, operations, review, and notification code. `frontend/src/styles/` keeps layout, form, and bike card styles separate.
+- `backend/src/app.ts` assembles the Express app. API handlers live in `backend/src/routes/`, and account session and recovery code lives in `backend/src/auth/`. Integration tests live in `backend/tests/api/`, and database migrations live in `backend/supabase/migrations/`.
+- `shared/` contains the cross-app types, rental date rules, and fleet seed data. `api/rideon.ts` connects Vercel to the same Express app used locally.
 
 ## Run locally
 
