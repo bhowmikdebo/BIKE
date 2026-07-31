@@ -32,12 +32,15 @@ Use **Forgot password?** on the sign-in page to request a reset link. Open that 
 
 Browse the [marketplace](http://127.0.0.1:5173/bikes), select a pickup city and dates, and submit a rental request. Check **My Bookings** for the host’s response. Private pickup instructions appear there after confirmation.
 
+Open the notification bell to see booking updates and follow a link to the matching reservation. Confirmed rentals get in-app reminders scheduled for 9 a.m. India time the day before pickup and return when there is still time to schedule them. After a rental is marked complete, leave one verified rating and review from **My Bookings**. Ratings appear in the catalog, and reviews appear on the bike page.
+
 ### Host your bikes
 
 1. Open [List your bike](http://127.0.0.1:5173/host). Sign in with your existing rider account or choose **Create a host account** and confirm your email.
 2. Set your public store name and introduction. Choose **Start hosting**.
 3. Under **Listings**, add bikes, photos, pickup cities, rates, and optional pickup instructions. Publish the listing to show it on your storefront.
 4. Use **Availability** on a listing to block personal or maintenance dates. Use **Requests** to confirm bookings and record pickup and return. Rider contact details are available to the host after confirmation.
+5. Use the notification bell to open new requests and see cancellations.
 
 ### Marketplace staff
 
