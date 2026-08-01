@@ -47,6 +47,20 @@ export function password(value: unknown, create = false) {
 
 export const accountName = (value: unknown) => text(value, 'Name', 100)
 
+export function hostProfile(value: unknown) {
+  const raw = object(value)
+  return { name: text(raw.name, 'Public host name', 80), bio: text(typeof raw.bio === 'string' ? raw.bio.trim() : raw.bio, 'Introduction', 400, true) }
+}
+
+export function blockedDates(value: unknown) {
+  const raw = object(value)
+  const pickup = text(raw.pickup, 'Start date', 10)
+  const returnDate = text(raw.returnDate, 'Available again', 10)
+  const error = dateError(pickup, returnDate)
+  if (error) throw new HttpError(400, error)
+  return { pickup, returnDate }
+}
+
 export function rental(raw: Record<string, unknown>, required: boolean): RentalSearch {
   const city = text(raw.city, 'Pickup city', 90, !required)
   const pickup = text(raw.pickup, 'Pickup date', 10, !required)
@@ -94,6 +108,7 @@ export function bikeInput(value: unknown): BikeInput {
     price: integer(raw.price, 'Daily rate', 1, 1_000_000), cities: list(raw.cities, 'Pickup cities', 20),
     features: list(raw.features, 'Features', 20), description: text(raw.description, 'Description', 1800),
     imageUrl: imageUrl(raw.imageUrl), image: raw.image, active: raw.active,
+    pickupInstructions: text(typeof raw.pickupInstructions === 'string' ? raw.pickupInstructions.trim() : raw.pickupInstructions, 'Pickup instructions', 600, true),
   }
 }
 

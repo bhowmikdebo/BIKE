@@ -1,6 +1,20 @@
 export type Category = 'Sports Bikes' | 'Cruisers' | 'Scooters' | 'Adventure Bikes' | 'Commuter Bikes'
 export type Transmission = 'Manual' | 'Automatic'
 
+export interface HostIdentity {
+  name: string
+  slug: string
+}
+
+export interface HostProfile extends HostIdentity {
+  bio: string
+}
+
+export interface HostStorefront {
+  host: HostProfile
+  bikes: Bike[]
+}
+
 export interface Bike {
   id: string
   brand: string
@@ -16,6 +30,7 @@ export interface Bike {
   description: string
   features: string[]
   imageUrl?: string
+  host?: HostIdentity | null
 }
 
 export interface RentalSearch {
@@ -36,11 +51,13 @@ export interface Filters extends RentalSearch {
 export interface ManagedBike extends Bike {
   active: boolean
   hasUploadedImage: boolean
+  pickupInstructions?: string
 }
 
-export interface BikeInput extends Omit<Bike, 'id'> {
+export interface BikeInput extends Omit<Bike, 'id' | 'host'> {
   active: boolean
   image?: string | null
+  pickupInstructions?: string
 }
 
 export interface Account {
@@ -48,6 +65,13 @@ export interface Account {
   name: string
   email: string
   role: 'customer' | 'admin'
+  host?: HostProfile | null
+}
+
+export interface BikeBlock {
+  id: string
+  pickup: string
+  returnDate: string
 }
 
 export type BookingStatus = 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled'
@@ -57,8 +81,10 @@ export interface BookingRecord extends RentalSearch {
   bikeId: string
   bikeName: string
   riderName: string
-  riderEmail: string
-  phone: string
+  riderEmail?: string
+  phone?: string
+  host?: HostIdentity | null
+  pickupInstructions?: string
   days: number
   dailyRate: number
   total: number
