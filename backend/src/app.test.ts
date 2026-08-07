@@ -20,6 +20,8 @@ function testSession(kind: Account['role']): Session {
 test('Express forwards validated requests with the current rider identity and protects admin routes', async t => {
   const calls: { name: string; args?: Record<string, unknown>; token?: string }[] = []
   const ended: string[] = []
+  const host = { name: 'Rider Garage', slug: 'rider-garage', bio: '' }
+  let hostEnabled = false
   const gateway: SupabaseGateway = {
     signIn: async email => testSession(email.startsWith('admin') ? 'admin' : 'customer'),
     register: async () => null,
@@ -29,7 +31,11 @@ test('Express forwards validated requests with the current rider identity and pr
       calls.push({ name, args, token })
       if (name === 'account') {
         if (token !== 'customer' && token !== 'admin') throw new HttpError(401, 'Sign in to continue.')
-        return { id: token, name: 'Test', email: 'test@example.test', role: token } as T
+        return { id: token, name: 'Test', email: 'test@example.test', role: token, host: token === 'customer' && hostEnabled ? host : null } as T
+      }
+      if (name === 'hostProfile') {
+        hostEnabled = true
+        return { id: token, name: 'Test', email: 'test@example.test', role: 'customer', host } as T
       }
       if (name === 'book') return { id: 'RD-TEST', status: 'pending' } as T
       return [] as T
@@ -58,6 +64,16 @@ test('Express forwards validated requests with the current rider identity and pr
   assert.equal((await request('/api/admin/bikes', 'GET', undefined, rider)).status, 403)
   assert.equal((await request('/api/admin/bikes', 'GET', undefined, admin)).status, 200)
   assert.equal(calls.at(-1)?.token, 'admin')
+
+  assert.equal((await request('/api/host/bikes')).status, 401)
+  assert.equal((await request('/api/host/bikes', 'GET', undefined, rider)).status, 403)
+  const onboarded = await request('/api/host/profile', 'PUT', { ...host, role: 'admin', userId: 'another-user' }, rider)
+  assert.equal(onboarded.status, 200)
+  assert.equal((await onboarded.json() as Account).role, 'customer')
+  assert.deepEqual(calls.at(-1), { name: 'hostProfile', args: { name: host.name, bio: host.bio }, token: 'customer' })
+  assert.equal((await request('/api/host/bikes', 'GET', undefined, rider)).status, 200)
+  assert.deepEqual(calls.at(-1), { name: 'fleet', args: { scope: 'host' }, token: 'customer' })
+  assert.equal((await request('/api/admin/bikes', 'GET', undefined, rider)).status, 403)
 
   const pickup = today()
   const rental = { city: 'Goa', pickup, returnDate: addDays(pickup, 3) }
