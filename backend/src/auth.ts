@@ -58,15 +58,21 @@ export function createSessionManager(gateway: SupabaseGateway, secure: boolean) 
     return { account, token: session.access_token }
   }
 
-  async function requireRole(request: Request, response: Response, role: Account['role']) {
+  async function requireAccount(request: Request, response: Response) {
     const user = await current(request, response)
     if (!user) throw new HttpError(401, 'Sign in to continue.')
+    return user
+  }
+
+  async function requireRole(request: Request, response: Response, role: Account['role']) {
+    const user = await requireAccount(request, response)
     if (user.account.role !== role) throw new HttpError(403, 'Your account cannot access this page.')
     return user
   }
 
   return {
     current,
+    requireAccount,
     requireRole,
     async start(response: Response, session: Session) {
       const account = await gateway.rpc<Account>('account', {}, session.access_token)

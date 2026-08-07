@@ -4,10 +4,10 @@ import { extname, resolve } from 'node:path'
 import { createSessionManager } from './auth.ts'
 import { checkOrigin, HttpError } from './http.ts'
 import type { SupabaseGateway } from './supabase.ts'
-import { accountEmail, accountName, bikeInput, bookingInput, object, password, rental, uploadedImage } from './validation.ts'
+import { accountEmail, accountName, bikeInput, blockedDates, bookingInput, hostProfile, object, password, rental, uploadedImage } from './validation.ts'
 
-function bikeId(request: Request) {
-  const id = request.params.id
+function resourceId(request: Request, parameter = 'id') {
+  const id = request.params[parameter]
   if (typeof id !== 'string' || !/^[a-z0-9-]{1,90}$/i.test(id)) throw new HttpError(404, 'Bike or booking not found.')
   return id
 }
@@ -73,11 +73,18 @@ export function createApp(gateway: SupabaseGateway, { origin = '', frontendDir =
     response.json(await gateway.rpc('catalog', { ...rental(request.query, false) }))
   })
   router.get('/bikes/:id/availability', async (request, response) => {
-    response.json(await gateway.rpc('quote', { ...rental(request.query, true), bikeId: bikeId(request) }))
+    response.json(await gateway.rpc('quote', { ...rental(request.query, true), bikeId: resourceId(request) }))
   })
-  router.get('/bikes/:id/image', async (request, response) => {
-    const photo = await gateway.rpc<{ mime: string; data: string }>('image', { bikeId: bikeId(request) })
+  async function sendBikeImage(response: Response, payload: Record<string, unknown>, token?: string) {
+    const photo = await gateway.rpc<{ mime: string; data: string }>('image', payload, token)
     response.type(photo.mime).set('Cache-Control', 'no-cache').send(Buffer.from(photo.data, 'base64'))
+  }
+
+  router.get('/bikes/:id/image', async (request, response) => {
+    await sendBikeImage(response, { bikeId: resourceId(request) })
+  })
+  router.get('/hosts/:slug', async (request, response) => {
+    response.json(await gateway.rpc('storefront', { slug: resourceId(request, 'slug') }))
   })
   router.get('/bookings', async (request, response) => {
     const { token } = await sessions.requireRole(request, response, 'customer')
@@ -89,35 +96,63 @@ export function createApp(gateway: SupabaseGateway, { origin = '', frontendDir =
   })
   router.patch('/bookings/:id/status', smallJson, async (request, response) => {
     const { token } = await sessions.requireRole(request, response, 'customer')
-    response.json(await gateway.rpc('status', { id: bikeId(request), status: object(request.body).status }, token))
+    response.json(await gateway.rpc('status', { id: resourceId(request), status: object(request.body).status, scope: 'rider' }, token))
   })
 
-  async function admin(request: Request, response: Response) {
-    return (await sessions.requireRole(request, response, 'admin')).token
+  router.put('/host/profile', smallJson, async (request, response) => {
+    const { token } = await sessions.requireAccount(request, response)
+    response.json(await gateway.rpc('hostProfile', hostProfile(request.body), token))
+  })
+
+  async function operator(request: Request, response: Response, scope: 'admin' | 'host') {
+    if (scope === 'admin') return (await sessions.requireRole(request, response, 'admin')).token
+    const user = await sessions.requireAccount(request, response)
+    if (!user.account.host) throw new HttpError(403, 'Set up your host profile first.')
+    return user.token
   }
-  router.get('/admin/bikes', async (request, response) => {
-    response.json(await gateway.rpc('fleet', {}, await admin(request, response)))
+
+  for (const scope of ['admin', 'host'] as const) {
+    const bikes = `/${scope}/bikes`
+    const bookings = `/${scope}/bookings`
+    router.get(bikes, async (request, response) => {
+      response.json(await gateway.rpc('fleet', { scope }, await operator(request, response, scope)))
+    })
+    router.post(bikes, fleetJson, async (request, response) => {
+      const token = await operator(request, response, scope)
+      response.status(201).json(await gateway.rpc('saveBike', { scope, data: saveInput(request.body) }, token))
+    })
+    router.put(bikes + '/:id', fleetJson, async (request, response) => {
+      const token = await operator(request, response, scope)
+      response.json(await gateway.rpc('saveBike', { scope, id: resourceId(request), data: saveInput(request.body) }, token))
+    })
+    router.patch(bikes + '/:id/publication', smallJson, async (request, response) => {
+      const token = await operator(request, response, scope)
+      const { active } = object(request.body)
+      if (typeof active !== 'boolean') throw new HttpError(400, 'Select a publication status.')
+      response.json(await gateway.rpc('publish', { scope, id: resourceId(request), active }, token))
+    })
+    router.get(bikes + '/:id/image', async (request, response) => {
+      await sendBikeImage(response, { scope, bikeId: resourceId(request) }, await operator(request, response, scope))
+    })
+    router.get(bookings, async (request, response) => {
+      response.json(await gateway.rpc('bookings', { scope }, await operator(request, response, scope)))
+    })
+    router.patch(bookings + '/:id/status', smallJson, async (request, response) => {
+      const token = await operator(request, response, scope)
+      response.json(await gateway.rpc('status', { scope, id: resourceId(request), status: object(request.body).status }, token))
+    })
+  }
+
+  router.get('/host/bikes/:id/blocks', async (request, response) => {
+    response.json(await gateway.rpc('blocks', { bikeId: resourceId(request) }, await operator(request, response, 'host')))
   })
-  router.post('/admin/bikes', fleetJson, async (request, response) => {
-    const token = await admin(request, response)
-    response.status(201).json(await gateway.rpc('saveBike', { data: saveInput(request.body) }, token))
+  router.post('/host/bikes/:id/blocks', smallJson, async (request, response) => {
+    const token = await operator(request, response, 'host')
+    response.status(201).json(await gateway.rpc('block', { bikeId: resourceId(request), ...blockedDates(request.body) }, token))
   })
-  router.put('/admin/bikes/:id', fleetJson, async (request, response) => {
-    const token = await admin(request, response)
-    response.json(await gateway.rpc('saveBike', { id: bikeId(request), data: saveInput(request.body) }, token))
-  })
-  router.patch('/admin/bikes/:id/publication', smallJson, async (request, response) => {
-    const token = await admin(request, response)
-    const { active } = object(request.body)
-    if (typeof active !== 'boolean') throw new HttpError(400, 'Select a publication status.')
-    response.json(await gateway.rpc('publish', { id: bikeId(request), active }, token))
-  })
-  router.get('/admin/bookings', async (request, response) => {
-    response.json(await gateway.rpc('bookings', { admin: true }, await admin(request, response)))
-  })
-  router.patch('/admin/bookings/:id/status', smallJson, async (request, response) => {
-    const token = await admin(request, response)
-    response.json(await gateway.rpc('status', { id: bikeId(request), status: object(request.body).status }, token))
+  router.delete('/host/bikes/:id/blocks/:blockId', async (request, response) => {
+    const token = await operator(request, response, 'host')
+    response.json(await gateway.rpc('unblock', { bikeId: resourceId(request), blockId: resourceId(request, 'blockId') }, token))
   })
 
   router.use((_request, _response) => { throw new HttpError(404, 'API route not found.') })
