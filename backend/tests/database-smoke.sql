@@ -62,7 +62,11 @@ begin
   begin
     perform public.rideon_api('book', requested || jsonb_build_object('requestKey', gen_random_uuid()));
     raise exception 'Overlapping reservation was accepted';
-  exception when exclusion_violation then null; end;
+  exception
+    when exclusion_violation then null;
+    when sqlstate 'PT409' then
+      if sqlerrm <> 'This bike is unavailable for those dates.' then raise; end if;
+  end;
   begin
     perform public.rideon_api('status', jsonb_build_object('id', reservation->>'id', 'status', 'cancelled'));
     raise exception 'Rider could cancel a different rider''s booking';
