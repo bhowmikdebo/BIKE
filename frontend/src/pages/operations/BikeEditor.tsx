@@ -4,6 +4,7 @@ import { Dialog, ImageAsset } from '../../components/ui'
 import { categories, cities } from '../../../../shared/fleet.ts'
 import type { BikeInput, ManagedBike } from '../../../../shared/types.ts'
 import { api, errorMessage } from '../../utils/api'
+import type { OperatorScope } from './Operations'
 
 const uploadLimit = 2 * 1024 * 1024
 const uploadTypes = ['image/jpeg', 'image/png', 'image/webp']
@@ -19,9 +20,10 @@ function readImage(file: File) {
   })
 }
 
-export function BikeEditor({ bike, onClose, onSaved }: { bike?: ManagedBike; onClose: () => void; onSaved: (bike: ManagedBike) => void }) {
+export function BikeEditor({ bike, scope, onClose, onSaved }: { bike?: ManagedBike; scope: OperatorScope; onClose: () => void; onSaved: (bike: ManagedBike) => void }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const endpoint = `/api/${scope}/bikes`
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -38,11 +40,11 @@ export function BikeEditor({ bike, onClose, onSaved }: { bike?: ManagedBike; onC
         price: Number(text('price')), engine: Number(text('engine')), mileage: Number(text('mileage')), seats: Number(text('seats')),
         cities: text('cities').split(',').map(city => city.trim()).filter(Boolean),
         features: text('features').split('\n').map(feature => feature.trim()).filter(Boolean),
-        fuel: 'Petrol', imageUrl: text('imageUrl'),
+        fuel: 'Petrol', imageUrl: text('imageUrl'), pickupInstructions: text('pickupInstructions'),
         active: form.has('active'),
         image: file instanceof File && file.size ? await readImage(file) : form.has('removeImage') ? null : undefined,
       }
-      const updated = await api<ManagedBike>(bike ? `/api/admin/bikes/${bike.id}` : '/api/admin/bikes', { method: bike ? 'PUT' : 'POST', body: payload })
+      const updated = await api<ManagedBike>(bike ? `${endpoint}/${bike.id}` : endpoint, { method: bike ? 'PUT' : 'POST', body: payload })
       onSaved(updated)
     } catch (error) {
       setError(errorMessage(error))
@@ -74,7 +76,8 @@ export function BikeEditor({ bike, onClose, onSaved }: { bike?: ManagedBike; onC
         <label className="field"><span>Upload bike photo</span><input name="photo" type="file" accept={uploadTypes.join(',')} /><small>JPG, PNG or WebP up to 2 MB.</small></label>
         <label className="field"><span>Image URL</span><input name="imageUrl" maxLength={400} placeholder="https://…" defaultValue={bike?.imageUrl} /><small>Optional. An uploaded photo takes priority.</small></label>
       </div>
-      {bike?.hasUploadedImage && <div className="editor-image"><ImageAsset src={`/api/bikes/${bike.id}/image`} width={90} height={60} alt="Current uploaded bike photo" /><label className="agreement"><input type="checkbox" name="removeImage" /> <span>Remove uploaded photo</span></label></div>}
+      {bike?.hasUploadedImage && <div className="editor-image"><ImageAsset src={`${endpoint}/${bike.id}/image`} width={90} height={60} alt="Current uploaded bike photo" /><label className="agreement"><input type="checkbox" name="removeImage" /> <span>Remove uploaded photo</span></label></div>}
+      <label className="field"><span>Private pickup instructions</span><textarea name="pickupInstructions" rows={2} maxLength={600} defaultValue={bike?.pickupInstructions} /><small>Include a meeting point or contact instructions. Only shown to the rider after confirmation.</small></label>
       <label className="agreement"><input type="checkbox" name="active" defaultChecked={bike?.active ?? true} /> <span>Publish this bike to the rental catalog</span></label>
       {error && <p className="field-error" role="alert">{error}</p>}
       <div className="portal-actions"><button className="button button-outline" type="button" onClick={onClose} disabled={busy}>Cancel</button><button className="button primary" disabled={busy} type="submit">{busy ? 'Saving…' : 'Save bike'}</button></div>

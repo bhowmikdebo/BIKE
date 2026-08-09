@@ -6,13 +6,13 @@ import { categories, cities } from '../../../shared/fleet.ts'
 import type { RentalSearch } from '../../../shared/types.ts'
 import { addDays, dateError, searchString, today } from '../../../shared/rental.ts'
 
-export function DateSelector({ value, onChange, required = false, icons = false }: { value: RentalSearch; onChange: (value: RentalSearch) => void; required?: boolean; icons?: boolean }) {
+export function DateSelector({ value, onChange, required = false, icons = false, labels = ['Pickup date', 'Return date'] }: { value: RentalSearch; onChange: (value: RentalSearch) => void; required?: boolean; icons?: boolean; labels?: [string, string] }) {
   return <>
-    <label className="field"><span>Pickup date</span><span className="field-control">{icons && <CalendarDays size={17} />}<input type="date" required={required} min={today()} value={value.pickup} onChange={event => {
+    <label className="field"><span>{labels[0]}</span><span className="field-control">{icons && <CalendarDays size={17} />}<input type="date" required={required} min={today()} value={value.pickup} onChange={event => {
       const pickup = event.target.value
       onChange({ ...value, pickup, returnDate: pickup && value.returnDate <= pickup ? '' : value.returnDate })
     }} /></span></label>
-    <label className="field"><span>Return date</span><span className="field-control">{icons && <CalendarDays size={17} />}<input type="date" required={required} min={addDays(value.pickup || today(), 1)} value={value.returnDate} onChange={event => onChange({ ...value, returnDate: event.target.value })} /></span></label>
+    <label className="field"><span>{labels[1]}</span><span className="field-control">{icons && <CalendarDays size={17} />}<input type="date" required={required} min={addDays(value.pickup || today(), 1)} value={value.returnDate} onChange={event => onChange({ ...value, returnDate: event.target.value })} /></span></label>
   </>
 }
 
