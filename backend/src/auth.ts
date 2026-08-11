@@ -8,7 +8,7 @@ const accessCookie = 'rideon_access'
 const refreshCookie = 'rideon_refresh'
 const cookieSettings = { httpOnly: true, sameSite: 'lax', path: '/api' } as const
 
-function readCookie(request: Request, name: string) {
+export function readCookie(request: Request, name: string) {
   const raw = request.headers.cookie?.split(';').map(part => part.trim()).find(part => part.startsWith(name + '='))?.slice(name.length + 1)
   if (!raw || raw.length > 4096) return undefined
   try { return decodeURIComponent(raw) } catch { return undefined }
@@ -72,6 +72,7 @@ export function createSessionManager(gateway: SupabaseGateway, secure: boolean) 
 
   return {
     current,
+    clear,
     requireAccount,
     requireRole,
     async start(response: Response, session: Session) {
