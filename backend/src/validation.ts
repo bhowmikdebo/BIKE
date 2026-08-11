@@ -45,6 +45,12 @@ export function password(value: unknown, create = false) {
   return value
 }
 
+export function confirmedPassword(value: unknown, confirmation: unknown) {
+  const secret = password(value, true)
+  if (secret !== confirmation) throw new HttpError(400, 'Passwords do not match.')
+  return secret
+}
+
 export const accountName = (value: unknown) => text(value, 'Name', 100)
 
 export function hostProfile(value: unknown) {
