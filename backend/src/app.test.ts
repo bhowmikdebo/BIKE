@@ -25,6 +25,9 @@ test('Express forwards validated requests with the current rider identity and pr
   const gateway: SupabaseGateway = {
     signIn: async email => testSession(email.startsWith('admin') ? 'admin' : 'customer'),
     register: async () => null,
+    sendRecoveryEmail: async () => null,
+    exchangeRecoveryCode: async () => null,
+    updateRecoveryPassword: async () => {},
     refresh: async token => token === 'refresh-customer' ? testSession('customer') : null,
     signOut: async token => { ended.push(token) },
     async rpc<T>(name: string, args?: Record<string, unknown>, token?: string) {
