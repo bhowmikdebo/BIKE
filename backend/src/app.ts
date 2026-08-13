@@ -3,6 +3,7 @@ import type { ErrorRequestHandler, Request, Response } from 'express'
 import { extname, resolve } from 'node:path'
 import { createSessionManager } from './auth.ts'
 import { checkOrigin, HttpError } from './http.ts'
+import { mountPasswordRecovery } from './recovery.ts'
 import type { SupabaseGateway } from './supabase.ts'
 import { accountEmail, accountName, bikeInput, blockedDates, bookingInput, hostProfile, object, password, rental, uploadedImage } from './validation.ts'
 
@@ -68,6 +69,8 @@ export function createApp(gateway: SupabaseGateway, { origin = '', frontendDir =
     await sessions.end(request, response)
     response.json(null)
   })
+
+  mountPasswordRecovery(router, gateway, { origin, parseJson: smallJson, limit: limitAuthentication, clearSession: sessions.clear })
 
   router.get('/bikes', async (request, response) => {
     response.json(await gateway.rpc('catalog', { ...rental(request.query, false) }))
