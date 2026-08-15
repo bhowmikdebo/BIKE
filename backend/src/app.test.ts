@@ -24,9 +24,10 @@ test('Express forwards validated requests with the current rider identity and pr
   const ended: string[] = []
   const host = { name: 'Rider Garage', slug: 'rider-garage', bio: '' }
   let hostEnabled = false
+  let registrationCount = 0
   const gateway: SupabaseGateway = {
     signIn: async email => testSession(email.startsWith('admin') ? 'admin' : 'customer'),
-    register: async () => null,
+    register: async () => { registrationCount++; return null },
     sendRecoveryEmail: async () => null,
     exchangeRecoveryCode: async () => null,
     updateRecoveryPassword: async () => {},
@@ -56,7 +57,10 @@ test('Express forwards validated requests with the current rider identity and pr
 
   assert.equal((await request('/api/admin/bikes')).status, 401)
   assert.equal((await request('/api/auth/sign-in', 'POST', {}, '', { Origin: 'https://unrelated.example' })).status, 403)
-  const registered = await request('/api/auth/register', 'POST', { name: 'Rider', email: 'rider@example.test', password: 'temporary-test-password' })
+  const signup = { name: 'Rider', email: 'rider@example.test', password: 'temporary-test-password' }
+  assert.equal((await request('/api/auth/register', 'POST', { ...signup, confirmPassword: 'a-different-password' })).status, 400)
+  assert.equal(registrationCount, 0)
+  const registered = await request('/api/auth/register', 'POST', { ...signup, confirmPassword: signup.password })
   assert.equal(registered.status, 201)
   assert.equal(await registered.json(), null)
   assert.equal(registered.headers.getSetCookie().length, 0)

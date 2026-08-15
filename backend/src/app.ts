@@ -5,7 +5,7 @@ import { createSessionManager } from './auth.ts'
 import { checkOrigin, HttpError } from './http.ts'
 import { mountPasswordRecovery } from './recovery.ts'
 import type { SupabaseGateway } from './supabase.ts'
-import { accountEmail, accountName, bikeInput, blockedDates, bookingInput, hostProfile, object, password, rental, uploadedImage } from './validation.ts'
+import { accountEmail, accountName, bikeInput, blockedDates, bookingInput, confirmedPassword, hostProfile, object, password, rental, uploadedImage } from './validation.ts'
 
 function resourceId(request: Request, parameter = 'id') {
   const id = request.params[parameter]
@@ -62,7 +62,7 @@ export function createApp(gateway: SupabaseGateway, { origin = '', frontendDir =
   router.post('/auth/register', smallJson, async (request, response) => {
     limitAuthentication(request)
     const raw = object(request.body)
-    const session = await gateway.register(accountName(raw.name), accountEmail(raw.email), password(raw.password, true))
+    const session = await gateway.register(accountName(raw.name), accountEmail(raw.email), confirmedPassword(raw.password, raw.confirmPassword))
     response.status(201).json(session ? await sessions.start(response, session) : null)
   })
   router.post('/auth/sign-out', async (request, response) => {

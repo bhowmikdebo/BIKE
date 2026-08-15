@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router'
+import { NewPasswordFields } from '../components/NewPasswordFields'
 import { AsyncState, EmptyState } from '../components/ui'
 import { useAuth } from '../hooks/auth'
 import type { Account } from '../../../shared/types.ts'
@@ -30,10 +31,12 @@ export function AccountPage({ register = false }: { register?: boolean }) {
     const details = new FormData(event.currentTarget)
     const email = String(details.get('email'))
     const password = String(details.get('password'))
+    const confirmPassword = String(details.get('confirmPassword') ?? '')
+    if (register && password !== confirmPassword) { setError('Passwords do not match.'); return }
     setBusy(true)
     setError('')
     try {
-      const account = register ? await auth.register(String(details.get('name')), email, password) : await auth.signIn(email, password)
+      const account = register ? await auth.register(String(details.get('name')), email, password, confirmPassword) : await auth.signIn(email, password)
       if (account) navigate(destination(next, account.role), { replace: true })
       else setConfirmEmail(true)
     } catch (error) {
@@ -48,10 +51,10 @@ export function AccountPage({ register = false }: { register?: boolean }) {
       <p>{admin ? 'Sign in with a RIDEON staff account.' : hosting ? 'Set up your storefront, list bikes, and manage requests. You can rent a bike with the same account.' : 'Book bikes or open a host storefront with the same account.'}</p>
       {register && confirmEmail ? <div className="form-success" role="status">
         <p>Open the confirmation link in your email, then return here and sign in.</p>
-      </div> : <form className="contact-form" onSubmit={submit} key={String(register)}>
+      </div> : <form className="contact-form" onSubmit={submit} onChange={() => setError('')} key={String(register)}>
         {register && <label className="field"><span>Full name</span><input name="name" required maxLength={100} autoComplete="name" /></label>}
         <label className="field"><span>Email address</span><input name="email" type="email" required maxLength={254} autoComplete="username" /></label>
-        <label className="field"><span>Password</span><input name="password" type="password" required minLength={register ? 12 : 1} maxLength={128} autoComplete={register ? 'new-password' : 'current-password'} />{register && <small>Use at least 12 characters.</small>}</label>
+        {register ? <NewPasswordFields /> : <label className="field"><span>Password</span><input name="password" type="password" required maxLength={128} autoComplete="current-password" /></label>}
         {error && <p className="field-error" role="alert">{error}</p>}
         <button className="button primary w-full" type="submit" disabled={busy}>{busy ? 'Please wait…' : register ? 'Create account' : 'Sign in'}</button>
       </form>}
