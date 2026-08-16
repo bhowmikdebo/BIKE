@@ -5,6 +5,7 @@ import { useFavorites } from '../hooks/favorites'
 import type { Bike } from '../../../shared/types.ts'
 import { money } from '../../../shared/rental.ts'
 import { ImageAsset } from './ui'
+import { HostLink } from './HostLink'
 
 export function BikeCard({ bike, query = '', compare }: { bike: Bike; query?: string; compare?: { selected: boolean; toggle: () => void } }) {
   const { ids, toggle } = useFavorites()
@@ -19,6 +20,7 @@ export function BikeCard({ bike, query = '', compare }: { bike: Bike; query?: st
     <div className="bike-card-body">
       <p className="bike-brand">{bike.brand}</p>
       <h3><Link to={path + query}>{bike.model}</Link></h3>
+      <HostLink host={bike.host} />
       <div className="bike-meta"><span><Gauge size={16} />{bike.engine} cc</span><span><Fuel size={16} />{bike.transmission}</span></div>
       <div className="bike-card-price"><strong>{money(bike.price)}</strong><span> / day</span></div>
       <div className="bike-card-actions"><Link className="button button-outline" to={path + query}>View Details</Link><Link className="button primary" to={path + query + '#reserve'}>Rent Now</Link></div>

@@ -78,7 +78,7 @@ export function Explore() {
   const query = filters.query.toLowerCase().trim()
   const results = invalidDates ? [] : bikes.filter(bike =>
     (!saved || favoriteIds.includes(bike.id)) &&
-    (!query || `${bikeName(bike)} ${bike.category} ${bike.transmission}`.toLowerCase().includes(query)) &&
+    (!query || `${bikeName(bike)} ${bike.category} ${bike.transmission} ${bike.host?.name ?? ''}`.toLowerCase().includes(query)) &&
     (!filters.brand || filters.brand === bike.brand) &&
     (!filters.category || filters.category === bike.category) &&
     (!filters.maxPrice || bike.price <= Number(filters.maxPrice)) &&
@@ -90,7 +90,7 @@ export function Explore() {
   const compared = comparison.flatMap(id => catalogBikes.filter(bike => bike.id === id))
 
   return <>
-    <section className="page-banner"><div className="container"><p className="eyebrow">The RIDEON fleet</p><h1>{saved ? 'Saved bikes' : 'Explore bikes'}</h1><p>{saved ? 'Keep your favorite rides within reach.' : 'Find a motorcycle or scooter for your route, dates and budget.'}</p></div></section>
+    <section className="page-banner"><div className="container"><p className="eyebrow">RIDEON marketplace</p><h1>{saved ? 'Saved bikes' : 'Explore bikes'}</h1><p>{saved ? 'Keep your favorite rides within reach.' : 'Find a motorcycle or scooter for your route, dates and budget.'}</p></div></section>
     <div className="container listing-shell">
       <SearchBar key={`${bookingQuery}|${filters.category}`} initial={rentalSearch(filters)} category={filters.category} cityOptions={cities} onSearch={value => update(value)} />
       <div className="listing-layout grid">
@@ -100,7 +100,7 @@ export function Explore() {
             <label className="catalog-search"><Search size={18} /><span className="sr-only">Search by model or brand</span><input type="search" value={filters.query} placeholder="Search by model or brand" onChange={event => update({ query: event.target.value }, true)} /></label>
             <button type="button" className="button button-outline mobile-filter" onClick={() => setDrawer(true)}><SlidersHorizontal size={17} />Filters</button>
           </div>
-          <div className="result-bar"><div className="result-count"><strong aria-live="polite">{results.length} {results.length === 1 ? 'bike' : 'bikes'}</strong><span>RIDEON fleet</span></div><div className="result-actions">
+          <div className="result-bar"><div className="result-count"><strong aria-live="polite">{results.length} {results.length === 1 ? 'bike' : 'bikes'}</strong><span>Marketplace</span></div><div className="result-actions">
             <button type="button" className={`button button-outline saved-filter ${saved ? 'is-active' : ''}`} aria-pressed={saved} onClick={() => setOption('saved', saved ? '' : '1')}><Heart size={16} fill={saved ? 'currentColor' : 'none'} />Saved</button>
             <label className="sort-select"><span className="sr-only">Sort bikes</span><select value={sort} onChange={event => setOption('sort', event.target.value)}><option value="">Sort by</option><option value="price-asc">Price: Low to High</option><option value="price-desc">Price: High to Low</option><option value="name">Name: A to Z</option></select></label>
           </div></div>

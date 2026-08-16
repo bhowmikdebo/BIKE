@@ -4,6 +4,8 @@ import { CalendarDays, Check, ChevronRight, Fuel, Gauge, Heart, MapPin, Settings
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 import { BikeGrid } from '../components/BikeCard'
 import { PriceBreakdown } from '../components/Booking'
+import { HostLink } from '../components/HostLink'
+import { useAuth } from '../hooks/auth'
 import { DateSelector } from '../components/Search'
 import { AsyncState, EmptyState, ImageAsset, SectionHeading } from '../components/ui'
 import { bikeImage, bikeName } from '../../../shared/fleet.ts'
@@ -25,6 +27,8 @@ function Gallery({ bike }: { bike: Bike }) {
 
 function RentalPanel({ bike, initial }: { bike: Bike; initial: RentalSearch }) {
   const navigate = useNavigate()
+  const { account } = useAuth()
+  const ownListing = Boolean(bike.host && account?.host?.slug === bike.host.slug)
   const { hash } = useLocation()
   useEffect(() => {
     if (hash !== '#reserve') return
@@ -63,14 +67,14 @@ function RentalPanel({ bike, initial }: { bike: Bike; initial: RentalSearch }) {
 
   return <aside className="rental-panel panel" id="reserve" aria-labelledby="reserve-title">
     <div className="rental-panel-heading"><div><p className="eyebrow" id="reserve-title">Plan your rental</p><p><strong>{money(bike.price)}</strong> / day</p></div><button className={`icon-button detail-favorite ${saved ? 'favorite-active' : ''}`} type="button" aria-pressed={saved} aria-label={`Favorite ${bikeName(bike)}`} onClick={() => toggle(bike.id)}><Heart size={21} fill={saved ? 'currentColor' : 'none'} /></button></div>
-    <form onSubmit={submit}>
+    {ownListing ? <div className="dialog-body"><p>This bike is listed on your storefront.</p><Link className="button button-outline" to="/host">Manage your listing</Link></div> : <form onSubmit={submit}>
       <label className="field"><span>Pickup location</span><span className="field-control"><MapPin size={17} /><select required value={rental.city} onChange={event => { setRental({ ...rental, city: event.target.value }); setError('') }}><option value="">Select city</option>{bike.cities.map(city => <option key={city}>{city}</option>)}</select></span></label>
       <div className="form-pair"><DateSelector value={rental} required onChange={value => { setRental(value); setError('') }} /></div>
       <PriceBreakdown bike={bike} days={days} />
       {error && <p className="field-error" role="alert">{error}</p>}
       <button className="button primary w-full" type="submit" disabled={busy}>{busy ? 'Checking availability…' : 'Continue to Booking'}</button>
       <p className="small-note">Request a booking without paying upfront</p>
-    </form>
+    </form>}
   </aside>
 }
 
@@ -85,7 +89,7 @@ function BikeDetail({ bike, initial, bikes }: { bike: Bike; initial: RentalSearc
   const otherBikes = bikes.filter(item => item.id !== bike.id).sort((a, b) => Number(b.category === bike.category) - Number(a.category === bike.category)).slice(0, 3)
   return <div className="container details-shell">
     <nav aria-label="Breadcrumbs" className="breadcrumbs"><Link to="/">Home</Link><ChevronRight size={15} /><Link to={`/bikes${searchString(rentalSearch(initial))}`}>Explore Bikes</Link><ChevronRight size={15} /><span>{bike.model}</span></nav>
-    <div className="details-heading"><p className="eyebrow">{bike.category}</p><h1>{bikeName(bike)}</h1></div>
+    <div className="details-heading"><p className="eyebrow">{bike.category}</p><h1>{bikeName(bike)}</h1><HostLink host={bike.host} /></div>
     <div className="details-layout grid">
       <Gallery bike={bike} />
       <RentalPanel bike={bike} initial={initial} />
