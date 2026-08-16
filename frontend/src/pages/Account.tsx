@@ -20,7 +20,8 @@ export function AccountPage({ register = false }: { register?: boolean }) {
   const [confirmEmail, setConfirmEmail] = useState(false)
   const next = params.get('next')
   const admin = next === '/admin'
-  const title = register ? 'Create your rider account' : admin ? 'Admin sign in' : 'Sign in to RIDEON'
+  const hosting = next === '/host' || next?.startsWith('/host?')
+  const title = register ? hosting ? 'Create a host account' : 'Create your RIDEON account' : admin ? 'Staff sign in' : hosting ? 'Sign in to host' : 'Sign in to RIDEON'
   if (auth.account) return <Navigate to={destination(next, auth.account.role)} replace />
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -43,8 +44,8 @@ export function AccountPage({ register = false }: { register?: boolean }) {
   }
 
   return <div className="container account-wrap">
-    <section className="panel account-panel"><p className="eyebrow">{admin ? 'Fleet operations' : 'Rider account'}</p><h1>{title}</h1>
-      <p>{admin ? 'Sign in with an account that has RIDEON administrator access.' : 'Keep track of your bike reservations and pickup details.'}</p>
+    <section className="panel account-panel"><p className="eyebrow">{admin ? 'Marketplace staff' : hosting ? 'For bike owners' : 'RIDEON marketplace'}</p><h1>{title}</h1>
+      <p>{admin ? 'Sign in with a RIDEON staff account.' : hosting ? 'Set up your storefront, list bikes, and manage requests. You can rent a bike with the same account.' : 'Book bikes or open a host storefront with the same account.'}</p>
       {register && confirmEmail ? <div className="form-success" role="status">
         <p>Open the confirmation link in your email, then return here and sign in.</p>
       </div> : <form className="contact-form" onSubmit={submit} key={String(register)}>
@@ -54,6 +55,7 @@ export function AccountPage({ register = false }: { register?: boolean }) {
         {error && <p className="field-error" role="alert">{error}</p>}
         <button className="button primary w-full" type="submit" disabled={busy}>{busy ? 'Please wait…' : register ? 'Create account' : 'Sign in'}</button>
       </form>}
+      {admin && <p className="account-switch">Want to list your own bikes? <Link to="/host">Become a host</Link></p>}
       {!admin && <p className="account-switch">{register ? 'Already have an account? ' : 'New to RIDEON? '}<Link to={`${register ? '/sign-in' : '/register'}${params.size ? '?' + params.toString() : ''}`}>{register ? 'Sign in' : 'Create an account'}</Link></p>}
     </section>
   </div>

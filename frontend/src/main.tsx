@@ -17,6 +17,7 @@ import { About, Contact } from './pages/Company'
 import { Details } from './pages/Details'
 import { Explore } from './pages/Explore'
 import { Home } from './pages/Home'
+import { Host } from './pages/Host'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -31,6 +32,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="sign-in" element={<AccountPage />} />
             <Route path="register" element={<AccountPage register />} />
             <Route path="my-bookings" element={<PortalGuard role="customer"><MyBookings /></PortalGuard>} />
+            <Route path="host" element={<Host />} />
             <Route path="admin" element={<PortalGuard role="admin"><Admin /></PortalGuard>} />
             <Route path="about" element={<About />} />
             <Route path="contact" element={<Contact />} />

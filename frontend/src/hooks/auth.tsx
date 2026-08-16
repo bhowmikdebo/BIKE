@@ -10,6 +10,7 @@ interface AuthState {
   retry: () => void
   signIn: (email: string, password: string) => Promise<Account>
   register: (name: string, email: string, password: string) => Promise<Account | null>
+  saveHostProfile: (name: string, bio: string) => Promise<Account>
   signOut: () => Promise<void>
 }
 
@@ -31,6 +32,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     register: async (name, email, password) => {
       const user = await api<Account | null>('/api/auth/register', { method: 'POST', body: { name, email, password } })
       if (user) setAccount(user)
+      return user
+    },
+    saveHostProfile: async (name, bio) => {
+      const user = await api<Account>('/api/host/profile', { method: 'PUT', body: { name, bio } })
+      setAccount(user)
       return user
     },
     signOut: async () => { await api('/api/auth/sign-out', { method: 'POST' }); setAccount(null) },
