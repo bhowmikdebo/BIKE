@@ -45,7 +45,7 @@ function RiderForm({ account, bike, rental, onRefresh }: { account: Account; bik
     <form className="contact-form" onSubmit={submit}>
       <label className="field"><span>Rider name</span><input required name="name" autoComplete="name" maxLength={100} defaultValue={account.name} /></label>
       <label className="field"><span>Phone number</span><input required type="tel" name="phone" autoComplete="tel" placeholder="98765 43210" maxLength={25} /></label>
-      <label className="agreement"><input type="checkbox" required name="agreement" /> <span>I’ve checked the pickup city and dates. I’ll wait for confirmation before arriving.</span></label>
+      <label className="agreement"><input type="checkbox" required name="agreement" /> <span>I’ve checked the city and dates. I’ll wait for confirmation before arriving.{bike.host && ' My contact details are shared with the host after confirmation.'}</span></label>
       {error && <p role="alert" className="field-error">{error}</p>}
       {staleQuote ? <button className="button button-outline" type="button" onClick={onRefresh}>Check latest availability</button> :
         <button className="button primary" type="submit" disabled={busy}>{busy ? 'Submitting…' : 'Request booking'}</button>}
@@ -68,6 +68,7 @@ export function Booking() {
   const fleet = useApi<Bike[]>(valid ? '/api/bikes' : null)
   const bike = fleet.data?.find(item => item.id === id)
   const quote = useApi<BookingQuote>(bike ? `/api/bikes/${bike.id}/availability${query}` : null)
+  const ownListing = Boolean(bike?.host && auth.account?.host?.slug === bike.host.slug)
   const signIn = `/sign-in?next=${encodeURIComponent(pathname + search)}`
 
   return <>
@@ -78,9 +79,10 @@ export function Booking() {
         <>
           <nav aria-label="Breadcrumbs" className="breadcrumbs"><Link to="/bikes">Explore Bikes</Link><ChevronRight size={15} /><Link to={`/bikes/${bike.id}${query}#reserve`}>{bikeName(bike)}</Link><ChevronRight size={15} /><span>Review booking</span></nav>
           {quote.data ? <>
-            <div className="demo-banner"><Info size={21} /><p><strong>Booking requests are reviewed by RIDEON.</strong> Check My Bookings for confirmation.</p></div>
+            <div className="demo-banner"><Info size={21} /><p><strong>{bike.host ? 'Your host reviews this request.' : 'RIDEON reviews this request.'}</strong> Check My Bookings for confirmation.</p></div>
             <div className="booking-layout grid">
-              {auth.account?.role === 'customer' ?
+              {ownListing ? <div className="panel customer-panel"><h2>This is your listing</h2><p className="section-description">Choose another bike to request a rental.</p><Link className="button primary" to="/bikes">Explore Bikes</Link></div> :
+               auth.account?.role === 'customer' ?
                 <RiderForm key={bike.id + query + quote.data.dailyRate} account={auth.account} bike={{ ...bike, price: quote.data.dailyRate }} rental={rental} onRefresh={quote.reload} /> :
                 auth.account === undefined ? <AsyncState error={auth.error} onRetry={auth.retry} label="Checking your session…" /> :
                 <div className="panel customer-panel"><h2>Rider account required</h2><p className="section-description">{auth.account ? 'Sign out of the administrator account and sign in as a rider to submit a booking.' : 'Sign in or create a rider account to request this bike.'}</p>{!auth.account && <Link className="button primary" to={signIn}>Sign in to book</Link>}</div>}
