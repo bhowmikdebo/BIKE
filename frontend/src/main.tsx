@@ -19,6 +19,7 @@ import { Details } from './pages/Details'
 import { Explore } from './pages/Explore'
 import { Home } from './pages/Home'
 import { Host } from './pages/Host'
+import { ForgotPassword, ResetPassword } from './pages/PasswordRecovery'
 import { Storefront } from './pages/Storefront'
 
 createRoot(document.getElementById('root')!).render(
@@ -33,6 +34,8 @@ createRoot(document.getElementById('root')!).render(
             <Route path="booking/:id" element={<Booking />} />
             <Route path="sign-in" element={<AccountPage />} />
             <Route path="register" element={<AccountPage register />} />
+            <Route path="forgot-password" element={<ForgotPassword />} />
+            <Route path="reset-password" element={<ResetPassword />} />
             <Route path="my-bookings" element={<PortalGuard role="customer"><MyBookings /></PortalGuard>} />
             <Route path="host" element={<Host />} />
             <Route path="hosts/:slug" element={<Storefront />} />
