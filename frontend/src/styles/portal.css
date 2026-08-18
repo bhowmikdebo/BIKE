@@ -7,7 +7,9 @@
 .account-panel > p:not(.eyebrow) { color: var(--muted); }
 .account-panel form { margin-top: 19px; }
 .account-panel .account-switch { margin-top: 15px; font-size: .9375rem; }
-.account-switch a { color: var(--orange-dark); font-weight: 700; text-decoration: underline; }
+.account-switch a, .forgot-password-link { color: var(--orange-dark); font-weight: 700; text-decoration: underline; }
+.contact-form .forgot-password-link { width: auto; justify-self: end; font-size: .875rem; }
+.account-panel .account-feedback { margin-top: 15px; }
 .field small { color: var(--muted); font-size: .8125rem; }
 .portal-content { padding-block: 25px 66px; }
 .portal-content .form-success { margin-bottom: 14px; }
