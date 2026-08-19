@@ -49,12 +49,16 @@ export function AccountPage({ register = false }: { register?: boolean }) {
   return <div className="container account-wrap">
     <section className="panel account-panel"><p className="eyebrow">{admin ? 'Marketplace staff' : hosting ? 'For bike owners' : 'RIDEON marketplace'}</p><h1>{title}</h1>
       <p>{admin ? 'Sign in with a RIDEON staff account.' : hosting ? 'Set up your storefront, list bikes, and manage requests. You can rent a bike with the same account.' : 'Book bikes or open a host storefront with the same account.'}</p>
+      {!register && params.get('reset') === 'complete' && <p className="account-feedback form-success" role="status">Password updated. Sign in with your new password.</p>}
       {register && confirmEmail ? <div className="form-success" role="status">
         <p>Open the confirmation link in your email, then return here and sign in.</p>
       </div> : <form className="contact-form" onSubmit={submit} onChange={() => setError('')} key={String(register)}>
         {register && <label className="field"><span>Full name</span><input name="name" required maxLength={100} autoComplete="name" /></label>}
         <label className="field"><span>Email address</span><input name="email" type="email" required maxLength={254} autoComplete="username" /></label>
-        {register ? <NewPasswordFields /> : <label className="field"><span>Password</span><input name="password" type="password" required maxLength={128} autoComplete="current-password" /></label>}
+        {register ? <NewPasswordFields /> : <>
+          <label className="field"><span>Password</span><input name="password" type="password" required maxLength={128} autoComplete="current-password" /></label>
+          <Link className="forgot-password-link" to={next ? `/forgot-password?next=${encodeURIComponent(next)}` : '/forgot-password'}>Forgot password?</Link>
+        </>}
         {error && <p className="field-error" role="alert">{error}</p>}
         <button className="button primary w-full" type="submit" disabled={busy}>{busy ? 'Please wait…' : register ? 'Create account' : 'Sign in'}</button>
       </form>}
