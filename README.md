@@ -26,6 +26,8 @@ The migrations in `backend/supabase/migrations/` create a private Postgres schem
 
 Riders sign up and sign in through Supabase Auth. If email confirmation is enabled, the rider opens the confirmation email and signs in afterward. Set your Site URL and allowed redirect URLs in Supabase Authentication settings. To use a specific confirmation landing page, set `SUPABASE_EMAIL_REDIRECT` in the backend environment to an allowed URL such as `http://127.0.0.1:5173/sign-in`.
 
+Use **Forgot password?** on the sign-in page to request a reset link. Open the email link in the same browser you used to request it. In Supabase Auth’s Redirect URLs, allow the app origin followed by `/api/auth/recovery/callback`, for example `http://127.0.0.1:5173/api/auth/recovery/callback` for Vite.
+
 ### Rent a bike
 
 Browse the [marketplace](http://127.0.0.1:5173/bikes), select a pickup city and dates, and submit a rental request. Check **My Bookings** for the host’s response. Private pickup instructions appear there after confirmation.
