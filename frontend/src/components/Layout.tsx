@@ -23,6 +23,7 @@ function Navbar() {
   const navigate = useNavigate()
   const portal = account?.role === 'admin' ? '/admin' : '/my-bookings'
   const portalLabel = account?.role === 'admin' ? 'Admin' : 'My Bookings'
+  const hostLabel = account?.host ? 'Host dashboard' : 'List your bike'
   async function leave() {
     try {
       await signOut()
@@ -38,7 +39,7 @@ function Navbar() {
       <Wordmark />
       <nav className="desktop-nav" aria-label="Main navigation">{links.map(link =>
         link.to.includes('#') ? <Link key={link.to} to={link.to}>{link.label}</Link> :
-        <NavLink key={link.to} to={link.to} end={link.to === '/'}>{link.label}</NavLink>)}</nav>
+        <NavLink key={link.to} to={link.to} end={link.to === '/'}>{link.label}</NavLink>)}<NavLink to="/host">{hostLabel}</NavLink></nav>
       <div className="nav-actions">
         <Link className="icon-button saved-link" aria-label={`Saved bikes${ids.length ? `, ${ids.length} saved` : ''}`} to="/bikes?saved=1"><Heart size={19} />{ids.length > 0 && <span>{ids.length}</span>}</Link>
         {account ? <><Link className="text-button desktop-signin" to={portal}>{portalLabel}</Link><button className="text-button desktop-signin" onClick={leave}>Sign Out</button></> :
@@ -49,6 +50,7 @@ function Navbar() {
     </div>
     {menu && <nav id="mobile-navigation" className="mobile-nav" aria-label="Mobile navigation" onKeyDown={event => { if (event.key === 'Escape') setMenu(false) }}>
       {links.map(link => <Link key={link.to} to={link.to} onClick={() => setMenu(false)}>{link.label}</Link>)}
+      <Link to="/host" onClick={() => setMenu(false)}>{hostLabel}</Link>
       {account ? <><Link to={portal} onClick={() => setMenu(false)}>{portalLabel}</Link><button className="text-button" onClick={leave}>Sign Out</button></> :
         <Link to="/sign-in" onClick={() => setMenu(false)}>Sign In</Link>}
       <Link className="button primary" to="/bikes" onClick={() => setMenu(false)}>Rent a Bike</Link>
@@ -63,11 +65,11 @@ function Footer() {
   return <footer className="footer">
     <div className="container">
       <div className="footer-grid grid">
-        <div className="footer-brand"><Wordmark /><p>Motorcycle and scooter rentals for wherever the road takes you.</p><div className="socials">
+        <div className="footer-brand"><Wordmark /><p>Rent a motorcycle or scooter from a local host, or list your own bike.</p><div className="socials">
           <button className="icon-button" aria-label="Instagram information" onClick={() => setInfo('Instagram')}><Camera size={18} /></button>
           <button className="icon-button" aria-label="YouTube information" onClick={() => setInfo('YouTube')}><Video size={18} /></button>
         </div></div>
-        <div><h2>RIDEON</h2>{links.slice(1).map(link => <Link key={link.to} to={link.to}>{link.label}</Link>)}<Link to="/admin">Admin portal</Link></div>
+        <div><h2>RIDEON</h2>{links.slice(1).map(link => <Link key={link.to} to={link.to}>{link.label}</Link>)}<Link to="/host">List your bike</Link></div>
         <div><h2>Explore</h2>{categories.map(category => <Link key={category.name} to={`/bikes${searchString({ category: category.name })}`}>{category.name}</Link>)}</div>
         <div className="footer-news"><h2>Stay in the loop</h2><p>Ride ideas and fleet updates.</p>
           <form onSubmit={event => { event.preventDefault(); setSubscribed(true); event.currentTarget.reset() }}>
@@ -84,7 +86,7 @@ function Footer() {
         <button onClick={() => setInfo('Terms')}>Terms</button><button onClick={() => setInfo('Privacy')}>Privacy</button>
       </div></div>
     </div>
-    {info && <Dialog title={info} onClose={() => setInfo('')}><div className="dialog-body"><p className="demo-tag">Frontend demo</p><p>{info === 'Privacy' ? 'Favorites are stored in this browser. Account and reservation details are stored on the RIDEON server.' : info === 'Terms' ? 'Submitting a reservation creates a request for pickup. RIDEON confirms requests in the booking portal.' : `A RIDEON ${info} profile has yet to be published.`}</p></div></Dialog>}
+    {info && <Dialog title={info} onClose={() => setInfo('')}><div className="dialog-body"><p className="demo-tag">Frontend demo</p><p>{info === 'Privacy' ? 'Favorites are stored in this browser. Your contact information is shared with your host after they confirm your reservation.' : info === 'Terms' ? 'Submitting a reservation creates a request for pickup. The host or marketplace staff confirms requests in the booking portal.' : `A RIDEON ${info} profile has yet to be published.`}</p></div></Dialog>}
   </footer>
 }
 

@@ -47,7 +47,7 @@ export function Home() {
     <div className="container home-search"><SearchBar integrated cityOptions={cities} /></div>
     <CategorySection />
     <section className="feature-band"><div className="container home-section">
-      <SectionHeading kicker="THE FLEET" title="Featured bikes" description="Compare bikes and daily rates before you request a rental." action={<Link className="button button-outline heading-action" to="/bikes">Explore the fleet</Link>} />
+      <SectionHeading kicker="THE FLEET" title="Featured bikes" description="Compare bikes, daily rates, and pickup cities from RIDEON hosts." action={<Link className="button button-outline heading-action" to="/bikes">Explore the marketplace</Link>} />
       {fleet.data ? (fleet.data.length ? <Reveal><BikeGrid bikes={fleet.data.slice(0, 6)} /></Reveal> :
         <p className="async-state">The fleet will be listed here when bikes are available.</p>) :
         <AsyncState error={fleet.error} onRetry={fleet.reload} label="Loading the fleet…" />}
@@ -59,6 +59,10 @@ export function Home() {
     <section className="steps-band" id="how-it-works"><div className="container home-section">
       <SectionHeading kicker="THE RENTAL EXPERIENCE" title="How it works" />
       <Reveal className="steps-grid grid">{steps.map(({ icon: Icon, title, detail }, index) => <article key={title}><div className="step-top"><span className="section-icon"><Icon size={25} /></span><span>Step {index + 1}</span></div><h3>{title}</h3><p>{detail}</p></article>)}</Reveal>
+    </div></section>
+    <section className="host-callout"><div className="container host-dashboard-heading">
+      <div><p className="eyebrow">For bike owners</p><h2>Have a bike to share?</h2><p>List it on RIDEON and set your own rate and availability.</p></div>
+      <Link className="button primary" to="/host">List your bike</Link>
     </div></section>
     <section className="road-banner">
       <ImageAsset src="/images/open-road.webp" width={1600} height={800} alt="" loading="lazy" />
