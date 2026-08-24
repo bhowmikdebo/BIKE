@@ -1,0 +1,42 @@
+.host-byline { display: inline-block; margin-top: 4px; color: var(--muted); font-size: .875rem; overflow-wrap: anywhere; }
+.host-byline a, .host-byline strong { color: var(--ink); font-weight: 650; }
+.host-byline a { text-decoration: underline; text-underline-offset: 3px; }
+.bike-card .host-byline { margin-bottom: 8px; }
+.details-heading .host-byline { margin-top: 10px; }
+.reservation-details .host-byline { margin-top: 0; }
+.pickup-instructions { white-space: pre-wrap; }
+
+.host-hero { background: var(--soft); padding-block: clamp(30px, 5.5vw, 75px); }
+.host-hero-content { display: grid; grid-template-columns: minmax(0, .88fr) minmax(0, 1.12fr); align-items: center; gap: clamp(22px, 4vw, 60px); }
+.host-hero-copy h1 { font-size: clamp(2.85rem, 6vw, 6rem); line-height: .94; margin-block: 8px 15px; }
+.host-hero-copy p:not(.eyebrow) { max-width: 42ch; color: var(--muted); }
+.host-hero-copy .portal-actions { margin-top: 19px; }
+.host-hero-content > img { width: 100%; height: clamp(245px, 36vw, 495px); object-fit: cover; object-position: 64% 50%; border-radius: 12px; }
+.host-steps { padding-block: clamp(38px, 6vw, 80px); }
+.host-steps h2, .host-callout h2 { font-size: clamp(1.9rem, 5vw, 3.4rem); margin-bottom: 8px; }
+.host-step-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 21px; }
+.host-step-grid article { padding: 17px 0; border-top: 1px solid var(--line); }
+.host-step-grid svg { color: var(--orange-dark); }
+.host-step-grid h3 { font-size: 1.45rem; margin-block: 8px 5px; }
+.host-step-grid p, .host-profile-panel > p { color: var(--muted); }
+.host-callout { padding-block: clamp(28px, 5vw, 55px); background: #f6e9df; }
+.host-dashboard-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 13px 24px; }
+.host-dashboard-heading > div { min-width: 0; }
+.host-dashboard-heading h1 { overflow-wrap: anywhere; }
+.host-profile-panel { max-width: 630px; }
+.host-profile-panel h2 { font-size: clamp(1.63rem, 4vw, 2.5rem); margin-bottom: 7px; }
+.host-profile-panel form { margin-top: 14px; }
+.availability-panel form, .availability-panel .async-state, .blocked-periods { width: 100%; }
+.availability-panel h3 { font-size: 1.2rem; }
+.blocked-periods li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; padding: 8px 0; border-top: 1px solid var(--line); font-size: .875rem; }
+
+@media (max-width: 680px) {
+  .host-hero-content { grid-template-columns: 1fr; }
+  .host-hero-content > img { height: 220px; }
+  .host-step-grid { grid-template-columns: 1fr; gap: 5px; }
+  .host-step-grid article { padding-block: 11px; }
+}
+
+@media (max-width: 390px) {
+  .availability-panel .form-pair { grid-template-columns: 1fr; }
+}

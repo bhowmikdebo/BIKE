@@ -153,14 +153,14 @@ select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg widt
 .empty-state h2 { font-size: 1.85rem; }
 .empty-state p { color: var(--muted); max-width: 46ch; }
 
-@media (max-width: 1050px) {
+@media (max-width: 1150px) {
   .desktop-nav { gap: 16px; }
   .nav-bar { gap: 16px; }
   .nav-actions { gap: 7px; }
   .bike-grid { gap: 14px; }
   .bike-card-body { padding: 13px; }
 }
-@media (max-width: 1050px) {
+@media (max-width: 1150px) {
   :root { --header-height: 64px; }
   .desktop-nav, .desktop-signin { display: none; }
   .menu-toggle { display: inline-grid; }
