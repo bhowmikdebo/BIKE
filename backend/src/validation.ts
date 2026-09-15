@@ -1,3 +1,5 @@
+import type { RentalSearch } from '../../shared/types.ts'
+import { dateError } from '../../shared/rental.ts'
 import { HttpError } from './http.ts'
 
 export function object(value: unknown): Record<string, unknown> {
@@ -27,3 +29,12 @@ export function password(value: unknown, create = false) {
 }
 
 export const accountName = (value: unknown) => text(value, 'Name', 100)
+
+export function rental(raw: Record<string, unknown>, required: boolean): RentalSearch {
+  const city = text(raw.city, 'Pickup city', 90, !required)
+  const pickup = text(raw.pickup, 'Pickup date', 10, !required)
+  const returnDate = text(raw.returnDate, 'Return date', 10, !required)
+  const error = dateError(pickup, returnDate, required)
+  if (error) throw new HttpError(400, error)
+  return { city, pickup, returnDate }
+}
