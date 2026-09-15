@@ -1,6 +1,9 @@
-import type { BookingInput, RentalSearch } from '../../shared/types.ts'
+import { categories } from '../../shared/fleet.ts'
+import type { BikeInput, BookingInput, RentalSearch } from '../../shared/types.ts'
 import { dateError } from '../../shared/rental.ts'
 import { HttpError } from './http.ts'
+
+export const uploadLimit = 2 * 1024 * 1024
 
 export function object(value: unknown): Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) throw new HttpError(400, 'Invalid request data.')
@@ -20,6 +23,13 @@ function integer(value: unknown, label: string, min: number, max: number) {
     throw new HttpError(400, `${label} must be a whole number from ${min} to ${max}.`)
   }
   return value
+}
+
+function list(value: unknown, label: string, max: number) {
+  if (!Array.isArray(value) || value.length < 1 || value.length > max) {
+    throw new HttpError(400, `${label} must contain 1 to ${max} entries.`)
+  }
+  return [...new Set(value.map(item => text(item, label, 90)))]
 }
 
 export function accountEmail(value: unknown) {
@@ -57,5 +67,32 @@ export function bookingInput(value: unknown): BookingInput {
   return {
     ...rental(raw, true), bikeId: text(raw.bikeId, 'Bike', 90), riderName: accountName(raw.riderName),
     phone, dailyRate: integer(raw.dailyRate, 'Daily rate', 1, 1_000_000), requestKey, agreement: true,
+  }
+}
+
+function imageUrl(value: unknown) {
+  const url = text(value, 'Image URL', 400, true)
+  if (!url || /^\/images\/[a-z\d-]+\.webp$/i.test(url)) return url
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol === 'https:' && !parsed.username && !parsed.password) return parsed.href
+  } catch { /* Invalid URL is reported below. */ }
+  throw new HttpError(400, 'Enter an HTTPS image URL or use an uploaded image.')
+}
+
+export function bikeInput(value: unknown): BikeInput {
+  const raw = object(value)
+  const category = categories.find(item => item.name === raw.category)?.name
+  if (!category) throw new HttpError(400, 'Select a bike category.')
+  if (raw.transmission !== 'Manual' && raw.transmission !== 'Automatic') throw new HttpError(400, 'Select a transmission.')
+  if (typeof raw.active !== 'boolean') throw new HttpError(400, 'Select a publication status.')
+  if (raw.image !== null && raw.image !== undefined && typeof raw.image !== 'string') throw new HttpError(400, 'Invalid image upload.')
+  return {
+    brand: text(raw.brand, 'Brand', 80), model: text(raw.model, 'Model', 80), category,
+    engine: integer(raw.engine, 'Engine capacity', 1, 5000), transmission: raw.transmission,
+    mileage: integer(raw.mileage, 'Mileage', 1, 500), fuel: 'Petrol', seats: integer(raw.seats, 'Seats', 1, 2),
+    price: integer(raw.price, 'Daily rate', 1, 1_000_000), cities: list(raw.cities, 'Pickup cities', 20),
+    features: list(raw.features, 'Features', 20), description: text(raw.description, 'Description', 1800),
+    imageUrl: imageUrl(raw.imageUrl), image: raw.image, active: raw.active,
   }
 }
