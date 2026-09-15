@@ -96,3 +96,16 @@ export function bikeInput(value: unknown): BikeInput {
     imageUrl: imageUrl(raw.imageUrl), image: raw.image, active: raw.active,
   }
 }
+
+export function uploadedImage(value: string) {
+  const match = /^data:(image\/(?:jpeg|png|webp));base64,([a-z\d+/]+=*)$/i.exec(value)
+  if (!match) throw new HttpError(400, 'Upload a JPG, PNG or WebP image.')
+  const data = Buffer.from(match[2], 'base64')
+  if (data.length > uploadLimit) throw new HttpError(413, 'Upload an image under 2 MB.')
+  const mime = match[1].toLowerCase()
+  const signature = mime === 'image/jpeg' ? data.subarray(0, 3).equals(Buffer.from([255, 216, 255])) :
+    mime === 'image/png' ? data.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])) :
+      data.subarray(0, 4).toString() === 'RIFF' && data.subarray(8, 12).toString() === 'WEBP'
+  if (!signature || data.length < 16) throw new HttpError(400, 'The image does not match its file format.')
+  return { mime, data }
+}
