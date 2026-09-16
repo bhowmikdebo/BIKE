@@ -8,6 +8,7 @@ export interface SupabaseGateway {
   rpc<T>(name: string, args?: Record<string, unknown>, accessToken?: string): Promise<T>
   signIn(email: string, password: string): Promise<Session>
   register(name: string, email: string, password: string): Promise<Session | null>
+  refresh(refreshToken: string): Promise<Session | null>
 }
 
 function authFailure(error: { status?: number; code?: string }, message: string) {
@@ -49,6 +50,11 @@ export function createSupabaseGateway(config: Config): SupabaseGateway {
       })
       if (error) throw authFailure(error, 'Could not create the account. Try signing in if you already have one.')
       return data.session
+    },
+    async refresh(refreshToken) {
+      const { data, error } = await client().auth.refreshSession({ refresh_token: refreshToken })
+      if (error && (!error.status || error.status >= 500)) throw authFailure(error, 'Could not refresh the session.')
+      return data?.session ?? null
     },
   }
 }
