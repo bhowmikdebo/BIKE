@@ -7,6 +7,7 @@ interface Config { url: string; key: string; emailRedirect?: string }
 export interface SupabaseGateway {
   rpc<T>(name: string, args?: Record<string, unknown>, accessToken?: string): Promise<T>
   signIn(email: string, password: string): Promise<Session>
+  register(name: string, email: string, password: string): Promise<Session | null>
 }
 
 function authFailure(error: { status?: number; code?: string }, message: string) {
@@ -40,6 +41,13 @@ export function createSupabaseGateway(config: Config): SupabaseGateway {
       const { data, error } = await client().auth.signInWithPassword({ email, password })
       if (error) throw authFailure(error, 'Email or password is incorrect.')
       if (!data.session) throw new HttpError(401, 'Unable to start a session.')
+      return data.session
+    },
+    async register(name, email, password) {
+      const { data, error } = await client().auth.signUp({
+        email, password, options: { data: { name }, emailRedirectTo: config.emailRedirect },
+      })
+      if (error) throw authFailure(error, 'Could not create the account. Try signing in if you already have one.')
       return data.session
     },
   }
