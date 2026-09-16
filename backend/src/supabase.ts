@@ -1,10 +1,19 @@
 import { createClient } from '@supabase/supabase-js'
+import type { Session } from '@supabase/supabase-js'
 import { HttpError } from './http.ts'
 
 interface Config { url: string; key: string; emailRedirect?: string }
 
 export interface SupabaseGateway {
   rpc<T>(name: string, args?: Record<string, unknown>, accessToken?: string): Promise<T>
+  signIn(email: string, password: string): Promise<Session>
+}
+
+function authFailure(error: { status?: number; code?: string }, message: string) {
+  if (error.code === 'email_not_confirmed') return new HttpError(403, 'Confirm your email before signing in.')
+  if (error.status === 429) return new HttpError(429, 'Too many authentication requests. Try again in a few minutes.')
+  if (!error.status || error.status >= 500) return new HttpError(503, 'Supabase Auth is temporarily unavailable.')
+  return new HttpError(error.status, message)
 }
 
 export function createSupabaseGateway(config: Config): SupabaseGateway {
@@ -26,6 +35,12 @@ export function createSupabaseGateway(config: Config): SupabaseGateway {
         throw new HttpError(503, 'The RIDEON database is temporarily unavailable.')
       }
       return data as T
+    },
+    async signIn(email, password) {
+      const { data, error } = await client().auth.signInWithPassword({ email, password })
+      if (error) throw authFailure(error, 'Email or password is incorrect.')
+      if (!data.session) throw new HttpError(401, 'Unable to start a session.')
+      return data.session
     },
   }
 }
