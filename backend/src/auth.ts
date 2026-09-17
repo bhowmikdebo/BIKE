@@ -73,5 +73,13 @@ export function createSessionManager(gateway: SupabaseGateway, secure: boolean) 
       write(response, session)
       return account
     },
+    async end(request: Request, response: Response) {
+      try {
+        const user = await current(request, response)
+        if (user) await gateway.signOut(user.token)
+      } finally {
+        clear(response)
+      }
+    },
   }
 }
