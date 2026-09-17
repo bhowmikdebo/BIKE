@@ -9,6 +9,7 @@ export interface SupabaseGateway {
   signIn(email: string, password: string): Promise<Session>
   register(name: string, email: string, password: string): Promise<Session | null>
   refresh(refreshToken: string): Promise<Session | null>
+  signOut(accessToken: string): Promise<void>
 }
 
 function authFailure(error: { status?: number; code?: string }, message: string) {
@@ -55,6 +56,10 @@ export function createSupabaseGateway(config: Config): SupabaseGateway {
       const { data, error } = await client().auth.refreshSession({ refresh_token: refreshToken })
       if (error && (!error.status || error.status >= 500)) throw authFailure(error, 'Could not refresh the session.')
       return data?.session ?? null
+    },
+    async signOut(accessToken) {
+      const { error } = await client().auth.admin.signOut(accessToken, 'local')
+      if (error && error.status !== 401 && error.status !== 404) throw authFailure(error, 'Could not end the session.')
     },
   }
 }
