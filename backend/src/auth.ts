@@ -15,6 +15,8 @@ function readCookie(request: Request, name: string) {
 }
 
 export function createSessionManager(gateway: SupabaseGateway, secure: boolean) {
+  const refreshes = new Map<string, Promise<Session | null>>()
+
   function clear(response: Response) {
     response.clearCookie(accessCookie, { ...cookieSettings, secure })
     response.clearCookie(refreshCookie, { ...cookieSettings, secure })
@@ -24,6 +26,17 @@ export function createSessionManager(gateway: SupabaseGateway, secure: boolean) 
     response.cookie(accessCookie, session.access_token, { ...cookieSettings, secure, maxAge: session.expires_in * 1000 })
     response.cookie(refreshCookie, session.refresh_token, { ...cookieSettings, secure, maxAge: 7 * 86_400_000 })
   }
+
+  function refreshOnce(token: string) {
+    const current = refreshes.get(token)
+    if (current) return current
+    const request = gateway.refresh(token)
+    refreshes.set(token, request)
+    const clearCache = () => { setTimeout(() => refreshes.delete(token), 5000).unref() }
+    void request.then(clearCache, clearCache)
+    return request
+  }
+
   async function current(request: Request, response: Response) {
     const access = readCookie(request, accessCookie)
     if (access) {
@@ -33,8 +46,16 @@ export function createSessionManager(gateway: SupabaseGateway, secure: boolean) 
         if (!(error instanceof HttpError && error.status === 401)) throw error
       }
     }
-    if (access) clear(response)
-    return null
+    const refreshToken = readCookie(request, refreshCookie)
+    if (!refreshToken) {
+      if (access) clear(response)
+      return null
+    }
+    const session = await refreshOnce(refreshToken)
+    if (!session) { clear(response); return null }
+    const account = await gateway.rpc<Account>('account', {}, session.access_token)
+    write(response, session)
+    return { account, token: session.access_token }
   }
 
   return {
