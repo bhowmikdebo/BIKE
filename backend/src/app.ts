@@ -2,9 +2,10 @@ import express from 'express'
 import type { ErrorRequestHandler } from 'express'
 import { checkOrigin, HttpError } from './http.ts'
 import type { SupabaseGateway } from './supabase.ts'
+import { rental } from './validation.ts'
 
 
-export function createApp(_gateway: SupabaseGateway, { origin = '' } = {}) {
+export function createApp(gateway: SupabaseGateway, { origin = '' } = {}) {
   const app = express()
   const router = express.Router()
 
@@ -20,6 +21,9 @@ export function createApp(_gateway: SupabaseGateway, { origin = '' } = {}) {
     next()
   })
 
+  router.get('/bikes', async (request, response) => {
+    response.json(await gateway.rpc('catalog', { ...rental(request.query, false) }))
+  })
 
   router.use((_request, _response) => { throw new HttpError(404, 'API route not found.') })
   app.use('/api', router)
