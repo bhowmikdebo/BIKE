@@ -1,9 +1,14 @@
 import express from 'express'
-import type { ErrorRequestHandler } from 'express'
+import type { ErrorRequestHandler, Request } from 'express'
 import { checkOrigin, HttpError } from './http.ts'
 import type { SupabaseGateway } from './supabase.ts'
 import { rental } from './validation.ts'
 
+function bikeId(request: Request) {
+  const id = request.params.id
+  if (typeof id !== 'string' || !/^[a-z0-9-]{1,90}$/i.test(id)) throw new HttpError(404, 'Bike or booking not found.')
+  return id
+}
 
 export function createApp(gateway: SupabaseGateway, { origin = '' } = {}) {
   const app = express()
@@ -23,6 +28,9 @@ export function createApp(gateway: SupabaseGateway, { origin = '' } = {}) {
 
   router.get('/bikes', async (request, response) => {
     response.json(await gateway.rpc('catalog', { ...rental(request.query, false) }))
+  })
+  router.get('/bikes/:id/availability', async (request, response) => {
+    response.json(await gateway.rpc('quote', { ...rental(request.query, true), bikeId: bikeId(request) }))
   })
 
   router.use((_request, _response) => { throw new HttpError(404, 'API route not found.') })
