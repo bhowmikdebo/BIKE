@@ -1,5 +1,6 @@
 import express from 'express'
 import type { ErrorRequestHandler, Request } from 'express'
+import { createSessionManager } from './auth.ts'
 import { checkOrigin, HttpError } from './http.ts'
 import type { SupabaseGateway } from './supabase.ts'
 import { rental } from './validation.ts'
@@ -13,6 +14,7 @@ function bikeId(request: Request) {
 export function createApp(gateway: SupabaseGateway, { origin = '' } = {}) {
   const app = express()
   const router = express.Router()
+  const sessions = createSessionManager(gateway, origin.startsWith('https://'))
 
   app.disable('x-powered-by')
   app.use((_request, response, next) => {
@@ -26,6 +28,9 @@ export function createApp(gateway: SupabaseGateway, { origin = '' } = {}) {
     next()
   })
 
+  router.get('/session', async (request, response) => {
+    response.json((await sessions.current(request, response))?.account ?? null)
+  })
   router.get('/bikes', async (request, response) => {
     response.json(await gateway.rpc('catalog', { ...rental(request.query, false) }))
   })
