@@ -68,6 +68,10 @@ export function createApp(gateway: SupabaseGateway, { origin = '' } = {}) {
     const photo = await gateway.rpc<{ mime: string; data: string }>('image', { bikeId: bikeId(request) })
     response.type(photo.mime).set('Cache-Control', 'no-cache').send(Buffer.from(photo.data, 'base64'))
   })
+  router.get('/bookings', async (request, response) => {
+    const { token } = await sessions.requireRole(request, response, 'customer')
+    response.json(await gateway.rpc('bookings', {}, token))
+  })
 
   router.use((_request, _response) => { throw new HttpError(404, 'API route not found.') })
   app.use('/api', router)
