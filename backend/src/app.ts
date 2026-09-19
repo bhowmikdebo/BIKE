@@ -54,6 +54,10 @@ export function createApp(gateway: SupabaseGateway, { origin = '' } = {}) {
     const session = await gateway.register(accountName(raw.name), accountEmail(raw.email), password(raw.password, true))
     response.status(201).json(session ? await sessions.start(response, session) : null)
   })
+  router.post('/auth/sign-out', async (request, response) => {
+    await sessions.end(request, response)
+    response.json(null)
+  })
   router.get('/bikes', async (request, response) => {
     response.json(await gateway.rpc('catalog', { ...rental(request.query, false) }))
   })
