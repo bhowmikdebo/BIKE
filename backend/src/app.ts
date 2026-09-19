@@ -3,7 +3,7 @@ import type { ErrorRequestHandler, Request } from 'express'
 import { createSessionManager } from './auth.ts'
 import { checkOrigin, HttpError } from './http.ts'
 import type { SupabaseGateway } from './supabase.ts'
-import { rental } from './validation.ts'
+import { accountEmail, object, password, rental } from './validation.ts'
 
 function bikeId(request: Request) {
   const id = request.params.id
@@ -15,6 +15,8 @@ export function createApp(gateway: SupabaseGateway, { origin = '' } = {}) {
   const app = express()
   const router = express.Router()
   const sessions = createSessionManager(gateway, origin.startsWith('https://'))
+  const attempts = new Map<string, { count: number; until: number }>()
+  const smallJson = express.json({ limit: '32kb' })
 
   app.disable('x-powered-by')
   app.use((_request, response, next) => {
@@ -28,8 +30,23 @@ export function createApp(gateway: SupabaseGateway, { origin = '' } = {}) {
     next()
   })
 
+  function limitAuthentication(request: Request) {
+    const ip = request.socket.remoteAddress || 'unknown'
+    const now = Date.now()
+    for (const [key, entry] of attempts) if (entry.until <= now) attempts.delete(key)
+    const attempt = attempts.get(ip) ?? { count: 0, until: now + 600_000 }
+    if (++attempt.count > 30) throw new HttpError(429, 'Too many sign-in attempts. Try again in a few minutes.')
+    attempts.set(ip, attempt)
+  }
+
   router.get('/session', async (request, response) => {
     response.json((await sessions.current(request, response))?.account ?? null)
+  })
+  router.post('/auth/sign-in', smallJson, async (request, response) => {
+    limitAuthentication(request)
+    const raw = object(request.body)
+    const session = await gateway.signIn(accountEmail(raw.email), password(raw.password))
+    response.json(await sessions.start(response, session))
   })
   router.get('/bikes', async (request, response) => {
     response.json(await gateway.rpc('catalog', { ...rental(request.query, false) }))
