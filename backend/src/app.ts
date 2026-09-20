@@ -1,5 +1,5 @@
 import express from 'express'
-import type { ErrorRequestHandler, Request } from 'express'
+import type { ErrorRequestHandler, Request, Response } from 'express'
 import { createSessionManager } from './auth.ts'
 import { checkOrigin, HttpError } from './http.ts'
 import type { SupabaseGateway } from './supabase.ts'
@@ -79,6 +79,12 @@ export function createApp(gateway: SupabaseGateway, { origin = '' } = {}) {
   router.patch('/bookings/:id/status', smallJson, async (request, response) => {
     const { token } = await sessions.requireRole(request, response, 'customer')
     response.json(await gateway.rpc('status', { id: bikeId(request), status: object(request.body).status }, token))
+  })
+  async function admin(request: Request, response: Response) {
+    return (await sessions.requireRole(request, response, 'admin')).token
+  }
+  router.get('/admin/bikes', async (request, response) => {
+    response.json(await gateway.rpc('fleet', {}, await admin(request, response)))
   })
 
   router.use((_request, _response) => { throw new HttpError(404, 'API route not found.') })
