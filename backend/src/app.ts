@@ -3,7 +3,7 @@ import type { ErrorRequestHandler, Request } from 'express'
 import { createSessionManager } from './auth.ts'
 import { checkOrigin, HttpError } from './http.ts'
 import type { SupabaseGateway } from './supabase.ts'
-import { accountEmail, accountName, object, password, rental } from './validation.ts'
+import { accountEmail, accountName, bookingInput, object, password, rental } from './validation.ts'
 
 function bikeId(request: Request) {
   const id = request.params.id
@@ -71,6 +71,10 @@ export function createApp(gateway: SupabaseGateway, { origin = '' } = {}) {
   router.get('/bookings', async (request, response) => {
     const { token } = await sessions.requireRole(request, response, 'customer')
     response.json(await gateway.rpc('bookings', {}, token))
+  })
+  router.post('/bookings', smallJson, async (request, response) => {
+    const { token } = await sessions.requireRole(request, response, 'customer')
+    response.status(201).json(await gateway.rpc('book', { ...bookingInput(request.body) }, token))
   })
 
   router.use((_request, _response) => { throw new HttpError(404, 'API route not found.') })
