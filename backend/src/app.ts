@@ -76,6 +76,10 @@ export function createApp(gateway: SupabaseGateway, { origin = '' } = {}) {
     const { token } = await sessions.requireRole(request, response, 'customer')
     response.status(201).json(await gateway.rpc('book', { ...bookingInput(request.body) }, token))
   })
+  router.patch('/bookings/:id/status', smallJson, async (request, response) => {
+    const { token } = await sessions.requireRole(request, response, 'customer')
+    response.json(await gateway.rpc('status', { id: bikeId(request), status: object(request.body).status }, token))
+  })
 
   router.use((_request, _response) => { throw new HttpError(404, 'API route not found.') })
   app.use('/api', router)
