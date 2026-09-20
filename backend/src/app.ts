@@ -3,12 +3,20 @@ import type { ErrorRequestHandler, Request, Response } from 'express'
 import { createSessionManager } from './auth.ts'
 import { checkOrigin, HttpError } from './http.ts'
 import type { SupabaseGateway } from './supabase.ts'
-import { accountEmail, accountName, bookingInput, object, password, rental } from './validation.ts'
+import { accountEmail, accountName, bikeInput, bookingInput, object, password, rental, uploadedImage } from './validation.ts'
 
 function bikeId(request: Request) {
   const id = request.params.id
   if (typeof id !== 'string' || !/^[a-z0-9-]{1,90}$/i.test(id)) throw new HttpError(404, 'Bike or booking not found.')
   return id
+}
+
+function saveInput(body: unknown) {
+  const input = bikeInput(body)
+  const { image, ...bike } = input
+  if (typeof image !== 'string') return { ...bike, ...(image === null ? { image: null } : {}) }
+  const file = uploadedImage(image)
+  return { ...bike, image: { mime: file.mime, data: file.data.toString('base64') } }
 }
 
 export function createApp(gateway: SupabaseGateway, { origin = '' } = {}) {
@@ -17,6 +25,7 @@ export function createApp(gateway: SupabaseGateway, { origin = '' } = {}) {
   const sessions = createSessionManager(gateway, origin.startsWith('https://'))
   const attempts = new Map<string, { count: number; until: number }>()
   const smallJson = express.json({ limit: '32kb' })
+  const fleetJson = express.json({ limit: '3mb' })
 
   app.disable('x-powered-by')
   app.use((_request, response, next) => {
@@ -85,6 +94,14 @@ export function createApp(gateway: SupabaseGateway, { origin = '' } = {}) {
   }
   router.get('/admin/bikes', async (request, response) => {
     response.json(await gateway.rpc('fleet', {}, await admin(request, response)))
+  })
+  router.post('/admin/bikes', fleetJson, async (request, response) => {
+    const token = await admin(request, response)
+    response.status(201).json(await gateway.rpc('saveBike', { data: saveInput(request.body) }, token))
+  })
+  router.put('/admin/bikes/:id', fleetJson, async (request, response) => {
+    const token = await admin(request, response)
+    response.json(await gateway.rpc('saveBike', { id: bikeId(request), data: saveInput(request.body) }, token))
   })
 
   router.use((_request, _response) => { throw new HttpError(404, 'API route not found.') })
