@@ -109,6 +109,13 @@ export function createApp(gateway: SupabaseGateway, { origin = '' } = {}) {
     if (typeof active !== 'boolean') throw new HttpError(400, 'Select a publication status.')
     response.json(await gateway.rpc('publish', { id: bikeId(request), active }, token))
   })
+  router.get('/admin/bookings', async (request, response) => {
+    response.json(await gateway.rpc('bookings', { admin: true }, await admin(request, response)))
+  })
+  router.patch('/admin/bookings/:id/status', smallJson, async (request, response) => {
+    const token = await admin(request, response)
+    response.json(await gateway.rpc('status', { id: bikeId(request), status: object(request.body).status }, token))
+  })
 
   router.use((_request, _response) => { throw new HttpError(404, 'API route not found.') })
   app.use('/api', router)
