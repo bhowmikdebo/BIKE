@@ -1,0 +1,14 @@
+import { createApp } from './app.ts'
+import { createSupabaseGateway } from './supabase.ts'
+
+const port = Number(process.env.RIDEON_PORT || 4173)
+if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('RIDEON_PORT must be a valid TCP port.')
+const origin = process.env.RIDEON_ORIGIN ? new URL(process.env.RIDEON_ORIGIN).origin : ''
+const url = process.env.SUPABASE_URL
+const key = process.env.SUPABASE_PUBLISHABLE_KEY
+if (!url || !key) throw new Error('Set SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY in backend/.env or in the environment.')
+const emailRedirect = process.env.SUPABASE_EMAIL_REDIRECT || (origin ? origin + '/sign-in' : undefined)
+const gateway = createSupabaseGateway({ url, key, emailRedirect })
+createApp(gateway, { origin }).listen(port, '127.0.0.1', () => {
+  console.log(`RIDEON Express API http://127.0.0.1:${port}`)
+})
