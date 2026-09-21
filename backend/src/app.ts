@@ -1,5 +1,6 @@
 import express from 'express'
 import type { ErrorRequestHandler, Request, Response } from 'express'
+import { extname, resolve } from 'node:path'
 import { createSessionManager } from './auth.ts'
 import { checkOrigin, HttpError } from './http.ts'
 import type { SupabaseGateway } from './supabase.ts'
@@ -19,7 +20,7 @@ function saveInput(body: unknown) {
   return { ...bike, image: { mime: file.mime, data: file.data.toString('base64') } }
 }
 
-export function createApp(gateway: SupabaseGateway, { origin = '' } = {}) {
+export function createApp(gateway: SupabaseGateway, { origin = '', frontendDir = '' } = {}) {
   const app = express()
   const router = express.Router()
   const sessions = createSessionManager(gateway, origin.startsWith('https://'))
@@ -67,6 +68,7 @@ export function createApp(gateway: SupabaseGateway, { origin = '' } = {}) {
     await sessions.end(request, response)
     response.json(null)
   })
+
   router.get('/bikes', async (request, response) => {
     response.json(await gateway.rpc('catalog', { ...rental(request.query, false) }))
   })
@@ -89,6 +91,7 @@ export function createApp(gateway: SupabaseGateway, { origin = '' } = {}) {
     const { token } = await sessions.requireRole(request, response, 'customer')
     response.json(await gateway.rpc('status', { id: bikeId(request), status: object(request.body).status }, token))
   })
+
   async function admin(request: Request, response: Response) {
     return (await sessions.requireRole(request, response, 'admin')).token
   }
@@ -119,6 +122,21 @@ export function createApp(gateway: SupabaseGateway, { origin = '' } = {}) {
 
   router.use((_request, _response) => { throw new HttpError(404, 'API route not found.') })
   app.use('/api', router)
+
+  if (frontendDir) {
+    app.use(express.static(frontendDir, { setHeaders: (response, path) => {
+      if (extname(path) === '.html') response.setHeader('Content-Security-Policy',
+        "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https: data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'")
+    } }))
+    app.get(/.*/, (request, response, next) => {
+      if (extname(request.path)) return next(new HttpError(404, 'File not found.'))
+      response.set('Content-Security-Policy',
+        "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https: data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'")
+      response.sendFile(resolve(frontendDir, 'index.html'), error => {
+        if (error) next(new HttpError(503, 'Build the frontend before opening the website.'))
+      })
+    })
+  }
 
   const errors: ErrorRequestHandler = (error, _request, response, next) => {
     if (response.headersSent) return next(error)
