@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict'
+import { randomUUID } from 'node:crypto'
 import { once } from 'node:events'
 import type { AddressInfo } from 'node:net'
 import { test } from 'node:test'
 import type { Session } from '@supabase/supabase-js'
 import type { Account } from '../../shared/types.ts'
+import { addDays, today } from '../../shared/rental.ts'
 import { createApp } from './app.ts'
 import { HttpError } from './http.ts'
 import type { SupabaseGateway } from './supabase.ts'
@@ -17,11 +19,12 @@ function testSession(kind: Account['role']): Session {
 
 test('Express forwards validated requests with the current rider identity and protects admin routes', async t => {
   const calls: { name: string; args?: Record<string, unknown>; token?: string }[] = []
+  const ended: string[] = []
   const gateway: SupabaseGateway = {
     signIn: async email => testSession(email.startsWith('admin') ? 'admin' : 'customer'),
     register: async () => null,
     refresh: async token => token === 'refresh-customer' ? testSession('customer') : null,
-    signOut: async token => { void token },
+    signOut: async token => { ended.push(token) },
     async rpc<T>(name: string, args?: Record<string, unknown>, token?: string) {
       calls.push({ name, args, token })
       if (name === 'account') {
@@ -55,4 +58,22 @@ test('Express forwards validated requests with the current rider identity and pr
   assert.equal((await request('/api/admin/bikes', 'GET', undefined, rider)).status, 403)
   assert.equal((await request('/api/admin/bikes', 'GET', undefined, admin)).status, 200)
   assert.equal(calls.at(-1)?.token, 'admin')
+
+  const pickup = today()
+  const rental = { city: 'Goa', pickup, returnDate: addDays(pickup, 3) }
+  assert.equal((await request('/api/bikes?' + new URLSearchParams(rental))).status, 200)
+  assert.deepEqual(calls.at(-1), { name: 'catalog', args: rental, token: undefined })
+
+  const booking = { ...rental, bikeId: 'classic-350', riderName: 'Rider', phone: '9876543210', dailyRate: 899, agreement: true, requestKey: randomUUID() }
+  assert.equal((await request('/api/bookings', 'POST', booking, admin)).status, 403)
+  assert.equal((await request('/api/bookings', 'POST', { ...booking, phone: 'invalid' }, rider)).status, 400)
+  const placed = await request('/api/bookings', 'POST', { ...booking, riderEmail: 'someone-else@example.test', role: 'admin' }, rider)
+  assert.equal(placed.status, 201)
+  assert.deepEqual(calls.at(-1), { name: 'book', args: booking, token: 'customer' })
+
+  const refreshed = await request('/api/session', 'GET', undefined, 'rideon_refresh=refresh-customer')
+  assert.equal((await refreshed.json() as Account).role, 'customer')
+  assert.match(cookies(refreshed), /rideon_access=customer/)
+  await request('/api/auth/sign-out', 'POST', undefined, rider)
+  assert.deepEqual(ended, ['customer'])
 })
