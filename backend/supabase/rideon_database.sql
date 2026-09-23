@@ -43,3 +43,7 @@ create table rideon_private.bookings (
 create index rideon_bookings_bike_idx on rideon_private.bookings (bike_id);
 create index rideon_bookings_customer_created_idx on rideon_private.bookings (user_id, created_at desc);
 create index rideon_bookings_created_idx on rideon_private.bookings (created_at desc);
+
+alter table rideon_private.profiles enable row level security;
+alter table rideon_private.bikes enable row level security;
+alter table rideon_private.bookings enable row level security;
