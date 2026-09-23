@@ -18,3 +18,25 @@ create table rideon_private.bikes (
   image_bytes bytea check (octet_length(image_bytes) between 16 and 2097152),
   check ((image_bytes is null) = (image_mime is null))
 );
+
+create table rideon_private.bookings (
+  id text primary key default ('RD-' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 16))),
+  user_id uuid not null references rideon_private.profiles(user_id),
+  bike_id text not null references rideon_private.bikes(id),
+  bike_name text not null,
+  rider_name text not null check (length(rider_name) between 1 and 100),
+  rider_email text not null,
+  phone text not null check (length(phone) between 10 and 25),
+  city text not null,
+  pickup date not null,
+  return_date date not null check (return_date > pickup),
+  days integer generated always as (return_date - pickup) stored,
+  daily_rate integer not null check (daily_rate between 1 and 1000000),
+  total bigint generated always as ((return_date - pickup)::bigint * daily_rate) stored,
+  status text not null default 'pending' check (status in ('pending', 'confirmed', 'in_progress', 'completed', 'cancelled')),
+  created_at timestamptz not null default now(),
+  request_key uuid not null,
+  unique (user_id, request_key),
+  exclude using gist (bike_id with =, daterange(pickup, return_date, '[)') with &&)
+    where (status in ('pending', 'confirmed', 'in_progress'))
+);
