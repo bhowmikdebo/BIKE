@@ -40,3 +40,6 @@ create table rideon_private.bookings (
   exclude using gist (bike_id with =, daterange(pickup, return_date, '[)') with &&)
     where (status in ('pending', 'confirmed', 'in_progress'))
 );
+create index rideon_bookings_bike_idx on rideon_private.bookings (bike_id);
+create index rideon_bookings_customer_created_idx on rideon_private.bookings (user_id, created_at desc);
+create index rideon_bookings_created_idx on rideon_private.bookings (created_at desc);
