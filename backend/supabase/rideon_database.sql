@@ -65,3 +65,17 @@ returns jsonb language sql immutable set search_path = '' as $$
     'status', b.status, 'createdAt', b.created_at
   );
 $$;
+
+create function rideon_private.local_date()
+returns date language sql stable set search_path = '' as $$
+  select (current_timestamp at time zone 'Asia/Kolkata')::date;
+$$;
+
+create function rideon_private.has_conflict(id text, pickup date, return_date date)
+returns boolean language sql stable set search_path = '' as $$
+  select exists (
+    select 1 from rideon_private.bookings b where b.bike_id = $1
+      and b.status in ('pending', 'confirmed', 'in_progress')
+      and daterange(b.pickup, b.return_date, '[)') && daterange($2, $3, '[)')
+  );
+$$;
