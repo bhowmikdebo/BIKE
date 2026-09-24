@@ -55,3 +55,13 @@ returns jsonb language sql immutable set search_path = '' as $$
          when b.image_bytes is not null then jsonb_build_object('imageUrl', '/api/bikes/' || b.id || '/image')
          else '{}'::jsonb end;
 $$;
+
+create function rideon_private.booking_json(b rideon_private.bookings)
+returns jsonb language sql immutable set search_path = '' as $$
+  select jsonb_build_object(
+    'id', b.id, 'bikeId', b.bike_id, 'bikeName', b.bike_name, 'riderName', b.rider_name,
+    'riderEmail', b.rider_email, 'phone', b.phone, 'city', b.city, 'pickup', b.pickup,
+    'returnDate', b.return_date, 'days', b.days, 'dailyRate', b.daily_rate, 'total', b.total,
+    'status', b.status, 'createdAt', b.created_at
+  );
+$$;
