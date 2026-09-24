@@ -47,3 +47,11 @@ create index rideon_bookings_created_idx on rideon_private.bookings (created_at 
 alter table rideon_private.profiles enable row level security;
 alter table rideon_private.bikes enable row level security;
 alter table rideon_private.bookings enable row level security;
+
+create function rideon_private.bike_json(b rideon_private.bikes, administrative boolean)
+returns jsonb language sql immutable set search_path = '' as $$
+  select b.data || jsonb_build_object('id', b.id, 'price', b.price, 'cities', b.cities) ||
+    case when administrative then jsonb_build_object('active', b.active, 'hasUploadedImage', b.image_bytes is not null)
+         when b.image_bytes is not null then jsonb_build_object('imageUrl', '/api/bikes/' || b.id || '/image')
+         else '{}'::jsonb end;
+$$;
