@@ -79,3 +79,71 @@ returns boolean language sql stable set search_path = '' as $$
       and daterange(b.pickup, b.return_date, '[)') && daterange($2, $3, '[)')
   );
 $$;
+
+create function rideon_private.dispatch(operation text, payload jsonb)
+returns jsonb language plpgsql security definer set search_path = '' as $$
+declare
+  current_id uuid := auth.uid();
+  current_email text := auth.jwt()->>'email';
+  profile rideon_private.profiles;
+  bike rideon_private.bikes;
+  booking rideon_private.bookings;
+  bike_id_arg text := coalesce(payload->>'bikeId', payload->>'id');
+  pickup_arg date;
+  return_arg date;
+  city_arg text := nullif(btrim(payload->>'city'), '');
+  request_arg uuid;
+  phone_arg text;
+  rider_arg text;
+  next_status text;
+  data_arg jsonb;
+  photo jsonb;
+  photo_bytes bytea;
+  photo_mime text;
+  cities_arg text[];
+  price_arg integer;
+  public_flag boolean;
+  administrative boolean;
+  results jsonb;
+begin
+  if operation = 'image' then
+    select * into bike from rideon_private.bikes b where b.id = bike_id_arg and b.image_bytes is not null;
+    if not found then raise sqlstate 'PT404' using message = 'Image not found.'; end if;
+    return jsonb_build_object('mime', bike.image_mime, 'data', encode(bike.image_bytes, 'base64'));
+  end if;
+
+  if operation in ('catalog', 'quote', 'book') then
+    pickup_arg := nullif(payload->>'pickup', '')::date;
+    return_arg := nullif(payload->>'returnDate', '')::date;
+    if (pickup_arg is null) <> (return_arg is null) or
+       (pickup_arg is not null and (pickup_arg < rideon_private.local_date() or return_arg <= pickup_arg)) or
+       (operation <> 'catalog' and (pickup_arg is null or city_arg is null)) then
+      raise sqlstate 'PT400' using message = 'Choose valid pickup and return dates and a pickup city.';
+    end if;
+  end if;
+
+  if operation = 'catalog' then
+    select jsonb_agg(rideon_private.bike_json(b, false) order by b.position) into results
+    from rideon_private.bikes b
+    where b.active
+      and (city_arg is null or exists (select 1 from unnest(b.cities) c where lower(c) = lower(city_arg)))
+      and (pickup_arg is null or not rideon_private.has_conflict(b.id, pickup_arg, return_arg));
+    return coalesce(results, '[]');
+  end if;
+
+  if operation = 'quote' then
+    select * into bike from rideon_private.bikes b where b.id = bike_id_arg and b.active;
+    if not found then raise sqlstate 'PT404' using message = 'This bike is no longer available for booking.'; end if;
+    if not exists (select 1 from unnest(bike.cities) c where lower(c) = lower(city_arg)) then
+      raise sqlstate 'PT400' using message = 'Choose a pickup city offered for this bike.';
+    end if;
+    if rideon_private.has_conflict(bike.id, pickup_arg, return_arg) then
+      raise sqlstate 'PT409' using message = 'This bike is unavailable for those dates.';
+    end if;
+    return jsonb_build_object('days', return_arg - pickup_arg, 'dailyRate', bike.price,
+      'total', (return_arg - pickup_arg)::bigint * bike.price);
+  end if;
+
+  raise sqlstate 'PT404' using message = 'Database operation not found.';
+end;
+$$;
