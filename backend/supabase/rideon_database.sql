@@ -180,6 +180,46 @@ begin
     return rideon_private.bike_json(bike, true);
   end if;
 
+  if operation = 'saveBike' then
+    data_arg := payload->'data';
+    if jsonb_typeof(data_arg) is distinct from 'object'
+       or jsonb_typeof(data_arg->'cities') is distinct from 'array'
+       or jsonb_typeof(data_arg->'active') is distinct from 'boolean'
+       or coalesce(length(btrim(data_arg->>'brand')), 0) not between 1 and 80
+       or coalesce(length(btrim(data_arg->>'model')), 0) not between 1 and 80
+       or coalesce(data_arg->>'category', '') not in ('Sports Bikes', 'Cruisers', 'Scooters', 'Adventure Bikes', 'Commuter Bikes')
+       or coalesce(data_arg->>'transmission', '') not in ('Manual', 'Automatic')
+       or coalesce(data_arg->>'imageUrl', '') !~ '^(https://[^[:space:]]+|/images/[a-z0-9-]+\.webp)?$' then
+      raise sqlstate 'PT400' using message = 'Check the fleet listing fields.';
+    end if;
+    cities_arg := array(select distinct btrim(c) from jsonb_array_elements_text(data_arg->'cities') c where length(btrim(c)) between 1 and 90);
+    price_arg := (data_arg->>'price')::integer;
+    public_flag := (data_arg->>'active')::boolean;
+    photo := data_arg->'image';
+    data_arg := data_arg - array['id', 'price', 'cities', 'active', 'image', 'hasUploadedImage'];
+    if jsonb_typeof(photo) = 'object' then
+      photo_mime := photo->>'mime';
+      if coalesce(photo_mime, '') not in ('image/jpeg', 'image/png', 'image/webp') or
+         coalesce(length(photo->>'data'), 0) not between 1 and 2796204 then
+        raise sqlstate 'PT400' using message = 'Upload a JPG, PNG or WebP image under 2 MB.';
+      end if;
+      photo_bytes := decode(photo->>'data', 'base64');
+    end if;
+    if bike_id_arg is null then
+      bike_id_arg := 'bike-' || gen_random_uuid()::text;
+      insert into rideon_private.bikes (id, data, price, cities, active, image_mime, image_bytes)
+      values (bike_id_arg, data_arg, price_arg, cities_arg, public_flag, photo_mime, photo_bytes)
+      returning * into bike;
+    else
+      update rideon_private.bikes b set data = data_arg, price = price_arg, cities = cities_arg, active = public_flag,
+        image_mime = case when photo is null then b.image_mime else photo_mime end,
+        image_bytes = case when photo is null then b.image_bytes else photo_bytes end
+      where b.id = bike_id_arg returning * into bike;
+      if not found then raise sqlstate 'PT404' using message = 'Bike not found.'; end if;
+    end if;
+    return rideon_private.bike_json(bike, true);
+  end if;
+
   raise sqlstate 'PT404' using message = 'Database operation not found.';
 end;
 $$;
