@@ -220,6 +220,15 @@ begin
     return rideon_private.bike_json(bike, true);
   end if;
 
+  if operation = 'bookings' then
+    if payload->'admin' = 'true'::jsonb and not administrative then
+      raise sqlstate 'PT403' using message = 'Administrator access is required.';
+    end if;
+    select jsonb_agg(rideon_private.booking_json(b) order by b.created_at desc) into results
+    from rideon_private.bookings b where b.user_id = current_id or (administrative and payload->'admin' = 'true'::jsonb);
+    return coalesce(results, '[]');
+  end if;
+
   raise sqlstate 'PT404' using message = 'Database operation not found.';
 end;
 $$;
