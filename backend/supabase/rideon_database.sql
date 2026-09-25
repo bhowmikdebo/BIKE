@@ -144,6 +144,26 @@ begin
       'total', (return_arg - pickup_arg)::bigint * bike.price);
   end if;
 
+  if current_id is null or current_email is null then
+    raise sqlstate 'PT401' using message = 'Sign in to continue.';
+  end if;
+
+  select * into profile from rideon_private.profiles p where p.user_id = current_id;
+  if not found then
+    insert into rideon_private.profiles (user_id, name)
+    values (current_id, left(coalesce(nullif(btrim(auth.jwt()->'user_metadata'->>'name'), ''), 'Rider'), 100))
+    on conflict (user_id) do nothing;
+    select * into strict profile from rideon_private.profiles p where p.user_id = current_id;
+  end if;
+  administrative := profile.role = 'admin';
+  if operation = 'account' then
+    return jsonb_build_object('id', current_id, 'name', profile.name, 'email', current_email, 'role', profile.role);
+  end if;
+
+  if operation in ('fleet', 'saveBike', 'publish') and not administrative then
+    raise sqlstate 'PT403' using message = 'Administrator access is required.';
+  end if;
+
   raise sqlstate 'PT404' using message = 'Database operation not found.';
 end;
 $$;
