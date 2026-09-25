@@ -164,6 +164,22 @@ begin
     raise sqlstate 'PT403' using message = 'Administrator access is required.';
   end if;
 
+  if operation = 'fleet' then
+    select jsonb_agg(rideon_private.bike_json(b, true) order by b.position desc) into results
+    from rideon_private.bikes b;
+    return coalesce(results, '[]');
+  end if;
+
+  if operation = 'publish' then
+    if jsonb_typeof(payload->'active') is distinct from 'boolean' then
+      raise sqlstate 'PT400' using message = 'Select a publication status.';
+    end if;
+    update rideon_private.bikes b set active = (payload->>'active')::boolean
+    where b.id = bike_id_arg returning * into bike;
+    if not found then raise sqlstate 'PT404' using message = 'Bike not found.'; end if;
+    return rideon_private.bike_json(bike, true);
+  end if;
+
   raise sqlstate 'PT404' using message = 'Database operation not found.';
 end;
 $$;
