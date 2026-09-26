@@ -229,6 +229,39 @@ begin
     return coalesce(results, '[]');
   end if;
 
+  if operation = 'book' then
+    if administrative then raise sqlstate 'PT403' using message = 'Use a rider account to book.'; end if;
+    phone_arg := btrim(payload->>'phone');
+    rider_arg := btrim(payload->>'riderName');
+    if payload->'agreement' is distinct from 'true'::jsonb or
+       coalesce(phone_arg, '') !~ '^[+()0-9 .-]{10,25}$' or
+       length(regexp_replace(phone_arg, '[^0-9]', '', 'g')) not between 10 and 15 or
+       coalesce(length(rider_arg), 0) not between 1 and 100 or
+       coalesce(payload->>'requestKey', '') !~* '^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$' then
+      raise sqlstate 'PT400' using message = 'Check rider details and acknowledge the booking request.';
+    end if;
+    request_arg := (payload->>'requestKey')::uuid;
+    price_arg := (payload->>'dailyRate')::integer;
+    perform pg_advisory_xact_lock(hashtextextended(current_id::text || request_arg::text, 0));
+    select * into booking from rideon_private.bookings b where b.user_id = current_id and b.request_key = request_arg;
+    if found then
+      if booking.bike_id = bike_id_arg and booking.pickup = pickup_arg and booking.return_date = return_arg and
+         lower(booking.city) = lower(city_arg) and booking.daily_rate = price_arg and booking.rider_name = rider_arg and booking.phone = phone_arg then
+        return rideon_private.booking_json(booking);
+      end if;
+      raise sqlstate 'PT409' using message = 'This booking request was already used for another reservation.';
+    end if;
+    select * into bike from rideon_private.bikes b where b.id = bike_id_arg and b.active for update;
+    if not found then raise sqlstate 'PT404' using message = 'This bike is no longer available for booking.'; end if;
+    if price_arg is distinct from bike.price then raise sqlstate 'PT409' using message = 'The daily rate changed. Review the latest quote before booking.'; end if;
+    select c into city_arg from unnest(bike.cities) c where lower(c) = lower(city_arg) limit 1;
+    if not found then raise sqlstate 'PT400' using message = 'Choose a pickup city offered for this bike.'; end if;
+    insert into rideon_private.bookings (user_id, request_key, bike_id, bike_name, rider_name, rider_email, phone, city, pickup, return_date, daily_rate)
+    values (current_id, request_arg, bike.id, (bike.data->>'brand') || ' ' || (bike.data->>'model'), rider_arg, current_email, phone_arg, city_arg, pickup_arg, return_arg, bike.price)
+    returning * into booking;
+    return rideon_private.booking_json(booking);
+  end if;
+
   raise sqlstate 'PT404' using message = 'Database operation not found.';
 end;
 $$;
