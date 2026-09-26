@@ -289,3 +289,16 @@ begin
   raise sqlstate 'PT404' using message = 'Database operation not found.';
 end;
 $$;
+
+create function public.rideon_api(operation text, payload jsonb default '{}'::jsonb)
+returns jsonb language sql security invoker set search_path = '' as $$
+  select rideon_private.dispatch(operation, payload);
+$$;
+
+revoke all on schema rideon_private from public, anon, authenticated;
+revoke all on all tables in schema rideon_private from public, anon, authenticated;
+revoke all on all functions in schema rideon_private from public, anon, authenticated;
+revoke all on function public.rideon_api(text, jsonb) from public, anon, authenticated;
+grant usage on schema rideon_private to anon, authenticated;
+grant execute on function rideon_private.dispatch(text, jsonb) to anon, authenticated;
+grant execute on function public.rideon_api(text, jsonb) to anon, authenticated;
