@@ -262,6 +262,30 @@ begin
     return rideon_private.booking_json(booking);
   end if;
 
+  if operation = 'status' then
+    next_status := payload->>'status';
+    if coalesce(next_status, '') not in ('pending', 'confirmed', 'in_progress', 'completed', 'cancelled') then
+      raise sqlstate 'PT400' using message = 'Select a valid booking status.';
+    end if;
+    select * into booking from rideon_private.bookings b
+    where b.id = bike_id_arg and (administrative or b.user_id = current_id) for update;
+    if not found then raise sqlstate 'PT404' using message = 'Booking not found.'; end if;
+    if not administrative and (next_status <> 'cancelled' or booking.pickup < rideon_private.local_date()) then
+      raise sqlstate 'PT403' using message = 'This booking can only be changed by an administrator.';
+    end if;
+    if booking.status = next_status then return rideon_private.booking_json(booking); end if;
+    if not ((booking.status = 'pending' and next_status in ('confirmed', 'cancelled'))
+         or (booking.status = 'confirmed' and next_status in ('in_progress', 'cancelled'))
+         or (booking.status = 'in_progress' and next_status = 'completed')) then
+      raise sqlstate 'PT409' using message = 'This status change is unavailable.';
+    end if;
+    if next_status = 'in_progress' and booking.pickup > rideon_private.local_date() then
+      raise sqlstate 'PT409' using message = 'Pickup cannot be recorded before the scheduled day.';
+    end if;
+    update rideon_private.bookings b set status = next_status where b.id = booking.id returning * into booking;
+    return rideon_private.booking_json(booking);
+  end if;
+
   raise sqlstate 'PT404' using message = 'Database operation not found.';
 end;
 $$;
