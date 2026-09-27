@@ -2,11 +2,17 @@ import { spawn } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 
 const children = [
-  spawn(process.execPath, ['--watch', 'server/index.ts'], { stdio: 'inherit' }),
+  spawn(process.execPath, ['--watch', 'src/index.ts'], {
+    cwd: fileURLToPath(new URL('../backend/', import.meta.url)),
+    stdio: 'inherit',
+  }),
   spawn(process.execPath, [
-    fileURLToPath(new URL('../node_modules/vite/bin/vite.js', import.meta.url)),
+    'node_modules/vite/bin/vite.js',
     ...process.argv.slice(2),
-  ], { stdio: 'inherit' }),
+  ], {
+    cwd: fileURLToPath(new URL('../frontend/', import.meta.url)),
+    stdio: 'inherit',
+  }),
 ]
 let stopping = false
 function stop(code) {
