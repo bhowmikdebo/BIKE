@@ -41,3 +41,16 @@ returning user_id, role;
 Sign in at [the admin portal](http://127.0.0.1:5173/admin). Use **Fleet** to add, edit, publish, or archive bikes and upload photos. Use **Bookings** to confirm requests and record pickup and return. Riders can request available bikes and view or cancel eligible reservations under **My Bookings**.
 
 The previous SQLite database is not read by this version. Existing SQLite accounts, if any, must register in Supabase Auth. No local SQLite file was present in the workspace at the time of migration.
+
+## Build and test
+
+```sh
+pnpm typecheck
+pnpm test
+pnpm build
+pnpm start
+```
+
+The built website is served by Express at [http://127.0.0.1:4173](http://127.0.0.1:4173). Serve the frontend and `/api` under the same public origin. For an HTTPS reverse proxy, set `RIDEON_ORIGIN` to that public origin to enforce same-origin requests and Secure session cookies.
+
+`pnpm test` checks the Express routes with an isolated Supabase gateway double. The rollback-only SQL test in `backend/tests/database-smoke.sql` exercises real Postgres permissions, quote calculation, booking conflicts, and cancellation.
