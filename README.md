@@ -19,3 +19,9 @@ pnpm dev
 The workspace uses the Supabase project [bhowmikdebo’s Project](https://supabase.com/dashboard/project/ejlzogpbapsjboxmziej). The local `backend/.env` is Git-ignored. On a fresh checkout, fill in `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` from the project’s **Connect** panel or **Settings → API Keys**. Supabase Auth and database access use the publishable key with the signed-in rider’s session. RIDEON does not require a service-role key.
 
 Open [the website](http://127.0.0.1:5173). The root development command runs Vite and Express together. You can also run `pnpm --filter @rideon/backend dev` and `pnpm --filter @rideon/frontend dev` in separate terminals. Vite forwards `/api` to Express at `127.0.0.1:4173`.
+
+## Database and accounts
+
+The Supabase migration in `backend/supabase/migrations/` creates a private Postgres schema and seeds eight fleet listings. Reservations store the rider’s own booking history and the rate at submission. Postgres prevents overlapping active rentals for the same bike, and role checks restrict administrative actions. The migration is already applied to the connected project.
+
+Riders sign up and sign in through Supabase Auth. If email confirmation is enabled, the rider opens the confirmation email and signs in afterward. Set your Site URL and allowed redirect URLs in Supabase Authentication settings. To use a specific confirmation landing page, set `SUPABASE_EMAIL_REDIRECT` in the backend environment to an allowed URL such as `http://127.0.0.1:5173/sign-in`.
