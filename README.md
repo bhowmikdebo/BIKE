@@ -25,3 +25,19 @@ Open [the website](http://127.0.0.1:5173). The root development command runs Vit
 The Supabase migration in `backend/supabase/migrations/` creates a private Postgres schema and seeds eight fleet listings. Reservations store the rider’s own booking history and the rate at submission. Postgres prevents overlapping active rentals for the same bike, and role checks restrict administrative actions. The migration is already applied to the connected project.
 
 Riders sign up and sign in through Supabase Auth. If email confirmation is enabled, the rider opens the confirmation email and signs in afterward. Set your Site URL and allowed redirect URLs in Supabase Authentication settings. To use a specific confirmation landing page, set `SUPABASE_EMAIL_REDIRECT` in the backend environment to an allowed URL such as `http://127.0.0.1:5173/sign-in`.
+
+To grant administrator access, have the administrator register and confirm their email first. As the Supabase project owner, run the following in the SQL Editor with that account’s email address.
+
+```sql
+insert into rideon_private.profiles (user_id, name, role)
+select id, left(coalesce(nullif(btrim(raw_user_meta_data->>'name'), ''), 'Administrator'), 100), 'admin'
+from auth.users
+where lower(email) = lower('replace-with-admin-email@example.com')
+  and email_confirmed_at is not null
+on conflict (user_id) do update set role = 'admin'
+returning user_id, role;
+```
+
+Sign in at [the admin portal](http://127.0.0.1:5173/admin). Use **Fleet** to add, edit, publish, or archive bikes and upload photos. Use **Bookings** to confirm requests and record pickup and return. Riders can request available bikes and view or cancel eligible reservations under **My Bookings**.
+
+The previous SQLite database is not read by this version. Existing SQLite accounts, if any, must register in Supabase Auth. No local SQLite file was present in the workspace at the time of migration.
