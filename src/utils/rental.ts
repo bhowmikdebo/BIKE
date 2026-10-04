@@ -1,3 +1,5 @@
+import type { Bike, RentalSearch } from '../types'
+
 const day = 86_400_000
 const dateParts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' })
 const readableDate = new Intl.DateTimeFormat('en-IN', { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
@@ -32,4 +34,14 @@ export function dateError(pickup: string, returnDate: string, required = true) {
   if (pickup < today()) return 'Choose a pickup date from today onward.'
   if (rentalDays(pickup, returnDate) < 1) return 'Choose a return date after pickup.'
   return ''
+}
+
+// Stagger two-day service windows across the demo fleet.
+export function isAvailable(bike: Bike, search: RentalSearch) {
+  if (search.city && !bike.cities.includes(search.city)) return false
+  if (!search.pickup || !search.returnDate || dateError(search.pickup, search.returnDate)) return true
+  const offset = 7 + bike.id.length % 8
+  const serviceStart = addDays(today(), offset)
+  const serviceEnd = addDays(serviceStart, 2)
+  return search.returnDate <= serviceStart || search.pickup >= serviceEnd
 }
