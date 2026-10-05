@@ -1,4 +1,4 @@
-import type { Bike, RentalSearch } from '../types'
+import type { Bike, Filters, RentalSearch } from '../types'
 
 const day = 86_400_000
 const dateParts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' })
@@ -44,4 +44,24 @@ export function isAvailable(bike: Bike, search: RentalSearch) {
   const serviceStart = addDays(today(), offset)
   const serviceEnd = addDays(serviceStart, 2)
   return search.returnDate <= serviceStart || search.pickup >= serviceEnd
+}
+
+export const emptyFilters: Filters = {
+  city: '', pickup: '', returnDate: '', query: '', category: '', brand: '', maxPrice: '', engine: '', transmission: '',
+}
+
+export function readFilters(params: URLSearchParams): Filters {
+  return Object.fromEntries(Object.keys(emptyFilters).map(key => [key, params.get(key) ?? ''])) as unknown as Filters
+}
+
+export function searchString(values: Partial<Filters>) {
+  const params = new URLSearchParams()
+  for (const [key, value] of Object.entries(values)) {
+    if (value) params.set(key, value)
+  }
+  return params.size ? `?${params}` : ''
+}
+
+export function rentalSearch(values: RentalSearch) {
+  return { city: values.city, pickup: values.pickup, returnDate: values.returnDate }
 }
