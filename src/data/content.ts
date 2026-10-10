@@ -17,3 +17,11 @@ export const reviews = [
   { name: 'Nisha R.', location: 'Bengaluru city ride', quote: 'I liked that I could filter for an automatic and get straight to the scooters. That’s all I needed for the day.' },
   { name: 'Kabir S.', location: 'Jaipur road trip', quote: 'Comparing the Himalayan and Classic side by side helped me decide which one fit the route.' },
 ]
+export const faqs = [
+  { question: 'What documents are required to rent a bike?', answer: 'A rental provider may ask for a valid driving licence and government-issued ID. Specific document checks would be listed before a live booking.' },
+  { question: 'Is a driving license necessary?', answer: 'Expect to provide a valid licence covering the class of vehicle you want to ride. Confirm the applicable requirements with the rental provider before pickup.' },
+  { question: 'Can I extend my rental duration?', answer: 'In a live service, extensions would depend on vehicle availability. You can change the dates in this demo to preview a longer rental.' },
+  { question: 'Is there a refundable security deposit?', answer: 'A live rental could include a refundable deposit. This demo shows the daily rental estimate. Deposit amounts and refund conditions are still to be established.' },
+  { question: 'What happens if I return a bike late?', answer: 'A live rental agreement would define late-return charges and any grace period. Contact the provider in advance if you expect your return time to change.' },
+  { question: 'Are helmets included?', answer: 'Helmet availability and sizing would be confirmed with the pickup location before a live rental.' },
+]
