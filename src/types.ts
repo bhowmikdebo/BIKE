@@ -42,3 +42,41 @@ export interface BikeInput extends Omit<Bike, 'id'> {
   active: boolean
   image?: string | null
 }
+
+export interface Account {
+  id: string
+  name: string
+  email: string
+  role: 'customer' | 'admin'
+}
+
+export type BookingStatus = 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled'
+
+export interface BookingRecord extends RentalSearch {
+  id: string
+  bikeId: string
+  bikeName: string
+  riderName: string
+  riderEmail: string
+  phone: string
+  days: number
+  dailyRate: number
+  total: number
+  status: BookingStatus
+  createdAt: string
+}
+
+export interface BookingQuote {
+  days: number
+  dailyRate: number
+  total: number
+}
+
+export interface BookingInput extends RentalSearch {
+  bikeId: string
+  riderName: string
+  phone: string
+  dailyRate: number
+  requestKey: string
+  agreement: boolean
+}
