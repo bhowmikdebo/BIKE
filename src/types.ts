@@ -15,6 +15,7 @@ export interface Bike {
   cities: string[]
   description: string
   features: string[]
+  imageUrl?: string
 }
 
 export interface RentalSearch {
@@ -30,4 +31,14 @@ export interface Filters extends RentalSearch {
   maxPrice: string
   engine: string
   transmission: string
+}
+
+export interface ManagedBike extends Bike {
+  active: boolean
+  hasUploadedImage: boolean
+}
+
+export interface BikeInput extends Omit<Bike, 'id'> {
+  active: boolean
+  image?: string | null
 }
