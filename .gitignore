@@ -3,3 +3,7 @@ dist/
 .cache/
 .DS_Store
 *.local
+/.rideon/
+.env
+.env.*
+!.env.example
