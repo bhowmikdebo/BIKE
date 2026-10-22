@@ -5,12 +5,12 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": "^22.22.0 || >=24.0.0"
+    "node": ">=24.15.0"
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
-    "typecheck": "tsc --noEmit",
+    "build": "pnpm typecheck && vite build",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.server.json",
     "preview": "vite preview"
   },
   "dependencies": {
