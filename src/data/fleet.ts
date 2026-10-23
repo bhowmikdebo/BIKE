@@ -1,4 +1,4 @@
-import type { Bike, Category } from '../types'
+import type { Bike, Category } from '../types.ts'
 
 export const cities = ['Bengaluru', 'Goa', 'Mumbai', 'New Delhi', 'Pune', 'Jaipur']
 
@@ -61,7 +61,10 @@ const fleet: Omit<Bike, 'fuel' | 'seats'>[] = [
   },
 ]
 
-export const bikes: Bike[] = fleet.map(bike => ({ ...bike, fuel: 'Petrol', seats: 2 }))
+export const seedBikes: Bike[] = fleet.map(bike => ({
+  ...bike, fuel: 'Petrol', seats: 2, imageUrl: `/images/${bike.id}.webp`,
+}))
+export const bikes = seedBikes
 export const brands = [...new Set(bikes.map(bike => bike.brand))].sort()
 export const bikeImage = (id: string) => `/images/${id}.webp`
 export const bikeName = (bike: Bike) => `${bike.brand} ${bike.model}`
