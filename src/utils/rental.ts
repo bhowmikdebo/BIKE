@@ -1,4 +1,4 @@
-import type { Bike, Filters, RentalSearch } from '../types'
+import type { Bike, Filters, RentalSearch } from '../types.ts'
 
 const day = 86_400_000
 const dateParts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' })
