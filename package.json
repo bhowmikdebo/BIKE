@@ -12,7 +12,8 @@
     "build": "pnpm typecheck && vite build",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.server.json",
     "start": "node --env-file-if-exists=.env server/index.ts",
-    "preview": "pnpm start"
+    "preview": "pnpm start",
+    "admin:create": "node --env-file-if-exists=.env server/create-admin.ts"
   },
   "dependencies": {
     "react": "^19.3.1",
