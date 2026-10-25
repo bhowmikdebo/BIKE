@@ -1,10 +1,10 @@
-import { Play } from 'lucide-react'
+import { Play, Quote } from 'lucide-react'
 import { Link } from 'react-router'
 import { motion, useReducedMotion } from 'motion/react'
 import { BikeGrid } from '../components/BikeCard'
 import { SearchBar } from '../components/Search'
 import { ImageAsset, Reveal, SectionHeading } from '../components/ui'
-import { benefits, steps } from '../data/content'
+import { benefits, reviews, steps } from '../data/content'
 import { bikes, categories } from '../data/fleet'
 import { searchString } from '../utils/rental'
 
@@ -54,5 +54,16 @@ export function Home() {
       <SectionHeading kicker="THE RENTAL EXPERIENCE" title="How it works" />
       <Reveal className="steps-grid grid">{steps.map(({ icon: Icon, title, detail }, index) => <article key={title}><div className="step-top"><span className="section-icon"><Icon size={25} /></span><span>Step {index + 1}</span></div><h3>{title}</h3><p>{detail}</p></article>)}</Reveal>
     </div></section>
+    <section className="road-banner">
+      <ImageAsset src="/images/open-road.webp" width={1600} height={800} alt="" loading="lazy" />
+      <div className="container"><h2>Every Great Journey<br className="hidden sm:block" /> Starts With a Ride.</h2><Link to="/bikes" className="button primary">Explore Bikes</Link></div>
+    </section>
+    <section className="container home-section reviews-section">
+      <SectionHeading kicker="DEMO REVIEWS" title="A few rides imagined" description="Illustrative reviews from fictional riders." />
+      <div className="reviews-grid grid">{reviews.map(review => <figure key={review.name}>
+        <Quote className="quote-icon" size={27} /><blockquote>“{review.quote}”</blockquote>
+        <figcaption><span className="review-avatar" aria-hidden="true">{review.name.slice(0, 1)}</span><span><strong>{review.name}</strong><small>{review.location}</small></span></figcaption>
+      </figure>)}</div>
+    </section>
   </>
 }
