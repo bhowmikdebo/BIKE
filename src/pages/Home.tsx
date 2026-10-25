@@ -4,6 +4,7 @@ import { motion, useReducedMotion } from 'motion/react'
 import { BikeGrid } from '../components/BikeCard'
 import { SearchBar } from '../components/Search'
 import { ImageAsset, Reveal, SectionHeading } from '../components/ui'
+import { benefits, steps } from '../data/content'
 import { bikes, categories } from '../data/fleet'
 import { searchString } from '../utils/rental'
 
@@ -44,6 +45,14 @@ export function Home() {
     <section className="feature-band"><div className="container home-section">
       <SectionHeading kicker="DEMO FLEET" title="Featured bikes" description="Explore illustrative fleet images and daily rates." action={<Link className="button button-outline heading-action" to="/bikes">Explore the fleet</Link>} />
       <Reveal><BikeGrid bikes={bikes.slice(0, 6)} /></Reveal>
+    </div></section>
+    <section className="container home-section benefits-section">
+      <SectionHeading title="Why choose RIDEON?" />
+      <div className="benefits-grid grid">{benefits.map(({ icon: Icon, title, detail }) => <div key={title}><span className="section-icon"><Icon size={23} /></span><h3>{title}</h3><p>{detail}</p></div>)}</div>
+    </section>
+    <section className="steps-band" id="how-it-works"><div className="container home-section">
+      <SectionHeading kicker="THE RENTAL EXPERIENCE" title="How it works" />
+      <Reveal className="steps-grid grid">{steps.map(({ icon: Icon, title, detail }, index) => <article key={title}><div className="step-top"><span className="section-icon"><Icon size={25} /></span><span>Step {index + 1}</span></div><h3>{title}</h3><p>{detail}</p></article>)}</Reveal>
     </div></section>
   </>
 }
