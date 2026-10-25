@@ -11,7 +11,8 @@
     "dev": "vite",
     "build": "pnpm typecheck && vite build",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.server.json",
-    "preview": "vite preview"
+    "start": "node --env-file-if-exists=.env server/index.ts",
+    "preview": "pnpm start"
   },
   "dependencies": {
     "react": "^19.3.1",
