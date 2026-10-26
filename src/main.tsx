@@ -6,6 +6,7 @@ import '@fontsource-variable/space-grotesk'
 import './styles/index.css'
 import { Layout } from './components/Layout'
 import { FavoritesProvider } from './hooks/favorites'
+import { Explore } from './pages/Explore'
 import { Home } from './pages/Home'
 
 createRoot(document.getElementById('root')!).render(
@@ -15,6 +16,7 @@ createRoot(document.getElementById('root')!).render(
         <Routes>
           <Route element={<Layout />}>
             <Route index element={<Home />} />
+            <Route path="bikes" element={<Explore />} />
           </Route>
         </Routes>
       </FavoritesProvider>
