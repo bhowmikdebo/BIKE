@@ -1,10 +1,10 @@
-import { Play, Quote } from 'lucide-react'
+import { ChevronDown, Play, Quote } from 'lucide-react'
 import { Link } from 'react-router'
 import { motion, useReducedMotion } from 'motion/react'
 import { BikeGrid } from '../components/BikeCard'
 import { SearchBar } from '../components/Search'
 import { ImageAsset, Reveal, SectionHeading } from '../components/ui'
-import { benefits, reviews, steps } from '../data/content'
+import { benefits, faqs, reviews, steps } from '../data/content'
 import { bikes, categories } from '../data/fleet'
 import { searchString } from '../utils/rental'
 
@@ -65,5 +65,11 @@ export function Home() {
         <figcaption><span className="review-avatar" aria-hidden="true">{review.name.slice(0, 1)}</span><span><strong>{review.name}</strong><small>{review.location}</small></span></figcaption>
       </figure>)}</div>
     </section>
+    <section className="faq-band"><div className="container home-section faq-layout grid">
+      <div><SectionHeading kicker="BEFORE YOU RIDE" title="Good to know." description="Illustrative rental policies for this frontend demo." /><Link className="faq-contact" to="/contact">Contact us</Link></div>
+      <div className="faq-list">{faqs.map(faq => <details className="faq-item" key={faq.question} name="rental-faq">
+        <summary>{faq.question}<ChevronDown size={20} /></summary><p>{faq.answer}</p>
+      </details>)}</div>
+    </div></section>
   </>
 }
