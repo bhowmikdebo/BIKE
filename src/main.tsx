@@ -9,6 +9,7 @@ import { FavoritesProvider } from './hooks/favorites'
 import { Explore } from './pages/Explore'
 import { Details } from './pages/Details'
 import { Booking } from './pages/Booking'
+import { About } from './pages/Company'
 import { Home } from './pages/Home'
 
 createRoot(document.getElementById('root')!).render(
@@ -21,6 +22,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="bikes" element={<Explore />} />
             <Route path="bikes/:id" element={<Details />} />
             <Route path="booking/:id" element={<Booking />} />
+            <Route path="about" element={<About />} />
           </Route>
         </Routes>
       </FavoritesProvider>
