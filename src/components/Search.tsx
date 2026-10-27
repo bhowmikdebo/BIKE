@@ -16,7 +16,7 @@ export function DateSelector({ value, onChange, required = false, icons = false 
   </>
 }
 
-export function SearchBar({ initial, category: initialCategory = '', integrated = false, onSearch }: { initial?: RentalSearch; category?: string; integrated?: boolean; onSearch?: (values: RentalSearch & { category: string }) => void }) {
+export function SearchBar({ initial, category: initialCategory = '', integrated = false, cityOptions = cities, onSearch }: { initial?: RentalSearch; category?: string; integrated?: boolean; cityOptions?: string[]; onSearch?: (values: RentalSearch & { category: string }) => void }) {
   const [value, setValue] = useState<RentalSearch>(initial ?? { city: '', pickup: '', returnDate: '' })
   const [category, setCategory] = useState(initialCategory)
   const [error, setError] = useState('')
@@ -32,7 +32,7 @@ export function SearchBar({ initial, category: initialCategory = '', integrated 
   }
 
   return <form className={`rental-search ${integrated ? 'rental-search-integrated' : ''}`} onSubmit={submit} aria-label="Search for a rental">
-    <label className="field"><span>Pickup location</span><span className="field-control"><MapPin size={18} /><select value={value.city} onChange={event => setValue({ ...value, city: event.target.value })}><option value="">Select city</option>{cities.map(city => <option key={city}>{city}</option>)}</select></span></label>
+    <label className="field"><span>Pickup location</span><span className="field-control"><MapPin size={18} /><select value={value.city} onChange={event => setValue({ ...value, city: event.target.value })}><option value="">Select city</option>{cityOptions.map(city => <option key={city}>{city}</option>)}</select></span></label>
     <DateSelector value={value} onChange={next => { setValue(next); setError('') }} icons />
     <label className="field"><span>Bike category</span><span className="field-control"><Bike size={18} /><select value={category} onChange={event => setCategory(event.target.value)}><option value="">All categories</option>{categories.map(item => <option key={item.name}>{item.name}</option>)}</select></span></label>
     <button type="submit" className="button primary search-submit"><Search size={18} />Search Bikes</button>
