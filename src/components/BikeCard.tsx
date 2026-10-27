@@ -12,7 +12,7 @@ export function BikeCard({ bike, query = '', compare }: { bike: Bike; query?: st
   const path = `/bikes/${bike.id}`
   return <article className="bike-card">
     <div className="bike-card-media">
-      <Link to={path + query} tabIndex={-1} aria-hidden="true"><ImageAsset src={bikeImage(bike.id)} alt="" loading="lazy" width={508} height={337} /></Link>
+      <Link to={path + query} tabIndex={-1} aria-hidden="true"><ImageAsset src={bikeImage(bike)} alt="" loading="lazy" width={508} height={337} /></Link>
       <span className="category-pill">{bike.category}</span>
       <button className={`icon-button favorite ${saved ? 'favorite-active' : ''}`} type="button" onClick={() => toggle(bike.id)} aria-pressed={saved} aria-label={`Favorite ${bikeName(bike)}`}><Heart size={19} fill={saved ? 'currentColor' : 'none'} /></button>
     </div>
