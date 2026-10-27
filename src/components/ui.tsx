@@ -53,3 +53,8 @@ export function Dialog({ title, onClose, children, className = '' }: { title: st
 export function EmptyState({ title, description, action }: { title: string; description: string; action: ReactNode }) {
   return <div className="empty-state"><Bike size={32} /><h2>{title}</h2><p>{description}</p>{action}</div>
 }
+
+export function AsyncState({ error, onRetry, label = 'Loading…' }: { error?: string; onRetry: () => void; label?: string }) {
+  if (error) return <div className="async-state"><p className="field-error" role="alert">{error}</p><button className="button button-outline" type="button" onClick={onRetry}>Try again</button></div>
+  return <div className="async-state" role="status">{label}</div>
+}
