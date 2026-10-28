@@ -3,9 +3,11 @@ import { Link } from 'react-router'
 import { motion, useReducedMotion } from 'motion/react'
 import { BikeGrid } from '../components/BikeCard'
 import { SearchBar } from '../components/Search'
-import { ImageAsset, Reveal, SectionHeading } from '../components/ui'
+import { AsyncState, ImageAsset, Reveal, SectionHeading } from '../components/ui'
 import { benefits, faqs, reviews, steps } from '../data/content'
-import { bikes, categories } from '../data/fleet'
+import { categories } from '../data/fleet'
+import { useApi } from '../hooks/api'
+import type { Bike } from '../types'
 import { searchString } from '../utils/rental'
 
 function Hero() {
@@ -38,13 +40,17 @@ function CategorySection() {
 }
 
 export function Home() {
+  const fleet = useApi<Bike[]>('/api/bikes')
+  const cities = fleet.data ? [...new Set(fleet.data.flatMap(bike => bike.cities))].sort() : undefined
   return <>
     <Hero />
-    <div className="container home-search"><SearchBar integrated /></div>
+    <div className="container home-search"><SearchBar integrated cityOptions={cities} /></div>
     <CategorySection />
     <section className="feature-band"><div className="container home-section">
-      <SectionHeading kicker="DEMO FLEET" title="Featured bikes" description="Explore illustrative fleet images and daily rates." action={<Link className="button button-outline heading-action" to="/bikes">Explore the fleet</Link>} />
-      <Reveal><BikeGrid bikes={bikes.slice(0, 6)} /></Reveal>
+      <SectionHeading kicker="THE FLEET" title="Featured bikes" description="Compare bikes and daily rates before you request a rental." action={<Link className="button button-outline heading-action" to="/bikes">Explore the fleet</Link>} />
+      {fleet.data ? (fleet.data.length ? <Reveal><BikeGrid bikes={fleet.data.slice(0, 6)} /></Reveal> :
+        <p className="async-state">The fleet will be listed here when bikes are available.</p>) :
+        <AsyncState error={fleet.error} onRetry={fleet.reload} label="Loading the fleet…" />}
     </div></section>
     <section className="container home-section benefits-section">
       <SectionHeading title="Why choose RIDEON?" />
@@ -66,7 +72,7 @@ export function Home() {
       </figure>)}</div>
     </section>
     <section className="faq-band"><div className="container home-section faq-layout grid">
-      <div><SectionHeading kicker="BEFORE YOU RIDE" title="Good to know." description="Illustrative rental policies for this frontend demo." /><Link className="faq-contact" to="/contact">Contact us</Link></div>
+      <div><SectionHeading kicker="BEFORE YOU RIDE" title="Good to know." description="Pickup policies are illustrative while RIDEON completes its operating terms." /><Link className="faq-contact" to="/contact">Contact us</Link></div>
       <div className="faq-list">{faqs.map(faq => <details className="faq-item" key={faq.question} name="rental-faq">
         <summary>{faq.question}<ChevronDown size={20} /></summary><p>{faq.answer}</p>
       </details>)}</div>

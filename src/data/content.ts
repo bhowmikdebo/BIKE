@@ -8,9 +8,9 @@ export const benefits = [
   { icon: Wrench, title: 'Well-maintained vehicles', detail: 'Our operating model calls for a pre-ride vehicle check.' },
 ]
 export const steps = [
-  { icon: MapPin, title: 'Find your ride', detail: 'Pick a city and browse the demo fleet by riding style, budget or brand.' },
-  { icon: ClipboardList, title: 'Choose your dates', detail: 'Set your pickup and return days to preview your rental estimate.' },
-  { icon: KeyRound, title: 'Start your journey', detail: 'Review your itinerary and get a feel for how pickup would work.' },
+  { icon: MapPin, title: 'Find your ride', detail: 'Pick a city and browse the fleet by riding style, budget or brand.' },
+  { icon: ClipboardList, title: 'Choose your dates', detail: 'Set your pickup and return days to check availability and review your rental cost.' },
+  { icon: KeyRound, title: 'Start your journey', detail: 'Submit a booking request and check your portal for confirmation before pickup.' },
 ]
 export const reviews = [
   { name: 'Aarav M.', location: 'Goa weekend', quote: 'I’d pick the Classic for the coast. Seeing the whole weekend cost up front made it easy to plan the trip.' },
@@ -20,8 +20,8 @@ export const reviews = [
 export const faqs = [
   { question: 'What documents are required to rent a bike?', answer: 'A rental provider may ask for a valid driving licence and government-issued ID. Specific document checks would be listed before a live booking.' },
   { question: 'Is a driving license necessary?', answer: 'Expect to provide a valid licence covering the class of vehicle you want to ride. Confirm the applicable requirements with the rental provider before pickup.' },
-  { question: 'Can I extend my rental duration?', answer: 'In a live service, extensions would depend on vehicle availability. You can change the dates in this demo to preview a longer rental.' },
-  { question: 'Is there a refundable security deposit?', answer: 'A live rental could include a refundable deposit. This demo shows the daily rental estimate. Deposit amounts and refund conditions are still to be established.' },
+  { question: 'Can I extend my rental duration?', answer: 'In a live service, extensions would depend on vehicle availability. Check the dates in the catalog before contacting RIDEON to request an extension.' },
+  { question: 'Is there a refundable security deposit?', answer: 'A live rental could include a refundable deposit. The booking page shows the daily rental total. Deposit amounts and refund conditions are still to be established.' },
   { question: 'What happens if I return a bike late?', answer: 'A live rental agreement would define late-return charges and any grace period. Contact the provider in advance if you expect your return time to change.' },
   { question: 'Are helmets included?', answer: 'Helmet availability and sizing would be confirmed with the pickup location before a live rental.' },
 ]
