@@ -113,3 +113,32 @@
 .contact-info div :is(small, a) { font-size: .875rem; color: var(--muted); }
 .contact-info div a:hover { color: var(--orange-dark); text-decoration: underline; }
 .contact-panel h2 { margin-bottom: 16px; }
+
+@media (max-width: 1100px) {
+  .listing-results .bike-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 880px) {
+  .listing-layout { grid-template-columns: 1fr; }
+  .desktop-filters { display: none; }
+  .mobile-filter { display: inline-flex; }
+  .details-layout { grid-template-columns: 1fr; }
+  .rental-panel { grid-column: auto; grid-row: auto; position: static; }
+  .booking-layout { grid-template-columns: 1fr; }
+  .booking-summary { grid-row: 1; }
+}
+@media (max-width: 640px) {
+  .about-grid, .about-values, .contact-layout { grid-template-columns: 1fr; }
+  .about-grid img { min-height: 205px; height: 240px; }
+  .about-hero h1 br { display: none; }
+  .contact-panel { grid-row: 1; }
+  .result-count { gap: 4px; flex-direction: column; align-items: start; }
+  .sort-select select { padding-left: 6px; max-width: 138px; }
+  .saved-filter { padding-inline: 8px; }
+  .result-actions, .result-bar { gap: 5px; }
+  .listing-shell { padding-bottom: 95px; }
+}
+@media (max-width: 470px) {
+  .listing-results .bike-grid { grid-template-columns: 1fr; }
+  .customer-panel .form-pair, .contact-panel .form-pair { grid-template-columns: 1fr; }
+  .spec-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
