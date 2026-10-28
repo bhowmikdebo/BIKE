@@ -3,11 +3,12 @@ import { GitCompareArrows, Heart, Search, SlidersHorizontal, X } from 'lucide-re
 import { Link, useSearchParams } from 'react-router'
 import { BikeGrid } from '../components/BikeCard'
 import { SearchBar } from '../components/Search'
-import { Dialog, EmptyState, ImageAsset } from '../components/ui'
-import { bikeImage, bikeName, bikes, brands, categories } from '../data/fleet'
+import { AsyncState, Dialog, EmptyState, ImageAsset } from '../components/ui'
+import { bikeImage, bikeName, categories } from '../data/fleet'
+import { useApi } from '../hooks/api'
 import { useFavorites } from '../hooks/favorites'
-import type { Filters } from '../types'
-import { dateError, isAvailable, money, readFilters, rentalSearch, searchString } from '../utils/rental'
+import type { Bike, Filters } from '../types'
+import { dateError, money, readFilters, rentalSearch, searchString } from '../utils/rental'
 
 const engineRanges = [
   { value: '0-160', label: 'Up to 160 cc', low: 0, high: 160 },
@@ -16,7 +17,7 @@ const engineRanges = [
 ]
 const prices = ['500', '800', '1000', '1250', '1500']
 
-function FilterPanel({ filters, update, clear }: { filters: Filters; update: (patch: Partial<Filters>) => void; clear: () => void }) {
+function FilterPanel({ filters, brands, update, clear }: { filters: Filters; brands: string[]; update: (patch: Partial<Filters>) => void; clear: () => void }) {
   return <div className="filter-panel">
     <div className="filter-heading"><h2>Filters</h2><button className="text-button" type="button" onClick={clear}>Clear Filters</button></div>
     <label className="field"><span>Category</span><select value={filters.category} onChange={event => update({ category: event.target.value })}><option value="">All categories</option>{categories.map(category => <option key={category.name}>{category.name}</option>)}</select></label>
@@ -39,6 +40,13 @@ export function Explore() {
   const saved = params.get('saved') === '1'
   const bookingQuery = searchString(rentalSearch(filters))
   const invalidDates = dateError(filters.pickup, filters.returnDate, false)
+  const catalog = useApi<Bike[]>('/api/bikes')
+  const availability = useApi<Bike[]>(!invalidDates && bookingQuery ? '/api/bikes' + bookingQuery : null)
+  const fleet = bookingQuery && !invalidDates ? availability : catalog
+  const bikes = fleet.data ?? []
+  const catalogBikes = catalog.data ?? []
+  const cities = catalog.data ? [...new Set(catalogBikes.flatMap(bike => bike.cities))].sort() : undefined
+  const brands = [...new Set(catalogBikes.map(bike => bike.brand))].sort()
 
   function update(patch: Partial<Filters>, replace = false) {
     const next = new URLSearchParams(params)
@@ -75,40 +83,40 @@ export function Explore() {
     (!filters.category || filters.category === bike.category) &&
     (!filters.maxPrice || bike.price <= Number(filters.maxPrice)) &&
     (!range || (bike.engine >= range.low && bike.engine <= range.high)) &&
-    (!filters.transmission || filters.transmission === bike.transmission) &&
-    isAvailable(bike, filters))
+    (!filters.transmission || filters.transmission === bike.transmission))
   if (sort === 'price-asc') results.sort((a, b) => a.price - b.price)
   if (sort === 'price-desc') results.sort((a, b) => b.price - a.price)
   if (sort === 'name') results.sort((a, b) => bikeName(a).localeCompare(bikeName(b)))
-  const compared = comparison.flatMap(id => bikes.filter(bike => bike.id === id))
+  const compared = comparison.flatMap(id => catalogBikes.filter(bike => bike.id === id))
 
   return <>
     <section className="page-banner"><div className="container"><p className="eyebrow">The RIDEON fleet</p><h1>{saved ? 'Saved bikes' : 'Explore bikes'}</h1><p>{saved ? 'Keep your favorite rides within reach.' : 'Find a motorcycle or scooter for your route, dates and budget.'}</p></div></section>
     <div className="container listing-shell">
-      <SearchBar key={`${bookingQuery}|${filters.category}`} initial={rentalSearch(filters)} category={filters.category} onSearch={value => update(value)} />
+      <SearchBar key={`${bookingQuery}|${filters.category}`} initial={rentalSearch(filters)} category={filters.category} cityOptions={cities} onSearch={value => update(value)} />
       <div className="listing-layout grid">
-        <aside className="desktop-filters"><FilterPanel filters={filters} update={update} clear={clear} /></aside>
+        <aside className="desktop-filters"><FilterPanel filters={filters} brands={brands} update={update} clear={clear} /></aside>
         <section aria-label="Matching bikes" className="listing-results">
           <div className="listing-tools">
             <label className="catalog-search"><Search size={18} /><span className="sr-only">Search by model or brand</span><input type="search" value={filters.query} placeholder="Search by model or brand" onChange={event => update({ query: event.target.value }, true)} /></label>
             <button type="button" className="button button-outline mobile-filter" onClick={() => setDrawer(true)}><SlidersHorizontal size={17} />Filters</button>
           </div>
-          <div className="result-bar"><div className="result-count"><strong aria-live="polite">{results.length} {results.length === 1 ? 'bike' : 'bikes'}</strong><span>Demo fleet</span></div><div className="result-actions">
+          <div className="result-bar"><div className="result-count"><strong aria-live="polite">{results.length} {results.length === 1 ? 'bike' : 'bikes'}</strong><span>RIDEON fleet</span></div><div className="result-actions">
             <button type="button" className={`button button-outline saved-filter ${saved ? 'is-active' : ''}`} aria-pressed={saved} onClick={() => setOption('saved', saved ? '' : '1')}><Heart size={16} fill={saved ? 'currentColor' : 'none'} />Saved</button>
             <label className="sort-select"><span className="sr-only">Sort bikes</span><select value={sort} onChange={event => setOption('sort', event.target.value)}><option value="">Sort by</option><option value="price-asc">Price: Low to High</option><option value="price-desc">Price: High to Low</option><option value="name">Name: A to Z</option></select></label>
           </div></div>
-          {results.length ? <BikeGrid bikes={results} query={bookingQuery} comparison={{ ids: comparison, toggle: toggleCompare }} /> :
+          {!invalidDates && (fleet.loading || fleet.error) ? <AsyncState label="Checking available bikes…" error={fleet.error} onRetry={fleet.reload} /> :
+          results.length ? <BikeGrid bikes={results} query={bookingQuery} comparison={{ ids: comparison, toggle: toggleCompare }} /> :
             <EmptyState title={invalidDates ? 'Check your rental dates' : saved ? 'No saved bikes match' : 'No bikes match your search'} description={invalidDates || (saved ? 'Save a ride using the heart on any bike card, or adjust your filters.' : 'Try another city or date range, or clear your filters to see more of the fleet.')} action={<button className="button primary" type="button" onClick={saved ? () => setParams({}) : clear}>{saved ? 'Explore all bikes' : 'Clear Filters'}</button>} />}
         </section>
       </div>
     </div>
-    {drawer && <Dialog title="Filter bikes" className="filter-drawer" onClose={() => setDrawer(false)}><FilterPanel filters={filters} update={update} clear={clear} /><button className="button primary w-full" type="button" onClick={() => setDrawer(false)}>Show {results.length} {results.length === 1 ? 'bike' : 'bikes'}</button></Dialog>}
+    {drawer && <Dialog title="Filter bikes" className="filter-drawer" onClose={() => setDrawer(false)}><FilterPanel filters={filters} brands={brands} update={update} clear={clear} /><button className="button primary w-full" type="button" onClick={() => setDrawer(false)}>Show {results.length} {results.length === 1 ? 'bike' : 'bikes'}</button></Dialog>}
     {comparison.length > 0 && <aside className="compare-tray" aria-label="Selected bikes to compare">
       <div><GitCompareArrows size={20} /><span><strong>{comparison.length} selected</strong><small role="status">{compareMessage || 'Select 2 or 3 bikes'}</small></span></div>
       <div><button type="button" className="icon-button" aria-label="Clear comparison" onClick={() => { setComparison([]); setCompareMessage('') }}><X size={18} /></button><button type="button" className="button primary" disabled={comparison.length < 2} onClick={() => setCompareOpen(true)}>Compare</button></div>
     </aside>}
     {compareOpen && <Dialog title="Compare bikes" className="comparison-dialog" onClose={() => setCompareOpen(false)}><div className="comparison-scroll" tabIndex={0} role="region" aria-label="Bike comparison table">
-      <table><thead><tr><th scope="col">Demo fleet</th>{compared.map(bike => <th scope="col" key={bike.id}><ImageAsset src={bikeImage(bike.id)} alt="" width={508} height={337} />{bikeName(bike)}</th>)}</tr></thead>
+      <table><thead><tr><th scope="col">Bike</th>{compared.map(bike => <th scope="col" key={bike.id}><ImageAsset src={bikeImage(bike)} alt="" width={508} height={337} />{bikeName(bike)}</th>)}</tr></thead>
         <tbody>
           <tr><th scope="row">Daily rate</th>{compared.map(bike => <td key={bike.id}>{money(bike.price)}</td>)}</tr>
           <tr><th scope="row">Category</th>{compared.map(bike => <td key={bike.id}>{bike.category}</td>)}</tr>
