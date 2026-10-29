@@ -64,7 +64,5 @@ const fleet: Omit<Bike, 'fuel' | 'seats'>[] = [
 export const seedBikes: Bike[] = fleet.map(bike => ({
   ...bike, fuel: 'Petrol', seats: 2, imageUrl: `/images/${bike.id}.webp`,
 }))
-export const bikes = seedBikes
-export const brands = [...new Set(bikes.map(bike => bike.brand))].sort()
-export const bikeImage = (bike: Bike | string) => typeof bike === 'string' ? `/images/${bike}.webp` : bike.imageUrl || '/images/fleet-fallback.webp'
+export const bikeImage = (bike: Bike) => bike.imageUrl || '/images/fleet-fallback.webp'
 export const bikeName = (bike: Bike) => `${bike.brand} ${bike.model}`

@@ -1,63 +1,95 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { CheckCircle2, ChevronRight, Info } from 'lucide-react'
-import { Link, useParams, useSearchParams } from 'react-router'
+import { ChevronRight, Info } from 'lucide-react'
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 import { BookingSummary } from '../components/Booking'
-import { EmptyState } from '../components/ui'
-import { bikeName, bikes } from '../data/fleet'
-import { dateError, isAvailable, readFilters, rentalSearch, searchString } from '../utils/rental'
+import { AsyncState, EmptyState } from '../components/ui'
+import { bikeName } from '../data/fleet'
+import { useApi } from '../hooks/api'
+import { useAuth } from '../hooks/auth'
+import type { Account, Bike, BookingQuote, BookingRecord, RentalSearch } from '../types'
+import { api, ApiError, errorMessage } from '../utils/api'
+import { dateError, readFilters, rentalSearch, searchString } from '../utils/rental'
 
-function CustomerForm() {
-  const [message, setMessage] = useState('')
-  const [complete, setComplete] = useState(false)
+function RiderForm({ account, bike, rental, onRefresh }: { account: Account; bike: Bike; rental: RentalSearch; onRefresh: () => void }) {
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [staleQuote, setStaleQuote] = useState(false)
+  const [requestKey] = useState(() => crypto.randomUUID())
+  const navigate = useNavigate()
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (busy) return
     const data = new FormData(event.currentTarget)
-    const name = String(data.get('name') ?? '').trim()
-    const phone = String(data.get('phone') ?? '').replace(/\D/g, '')
-    if (name.length < 2 || phone.length < 10 || phone.length > 15) {
-      setMessage('Enter your full name and a phone number with 10–15 digits.')
-      return
+    setBusy(true)
+    setError('')
+    setStaleQuote(false)
+    try {
+      const booking = await api<BookingRecord>('/api/bookings', { method: 'POST', body: {
+        ...rental, bikeId: bike.id, dailyRate: bike.price, requestKey,
+        riderName: data.get('name'), phone: data.get('phone'), agreement: data.get('agreement') === 'on',
+      } })
+      navigate('/my-bookings', { replace: true, state: { requested: booking.id } })
+    } catch (error) {
+      setError(errorMessage(error))
+      setStaleQuote(error instanceof ApiError && [404, 409].includes(error.status))
+    } finally {
+      setBusy(false)
     }
-    event.currentTarget.reset()
-    setMessage('')
-    setComplete(true)
   }
 
   return <div className="panel customer-panel">
     <h2>Rider details</h2>
-    <p className="section-description">Use sample details to try the form.</p>
-    {complete ? <div role="status" className="form-success"><CheckCircle2 size={27} /><div><strong>Demo preview complete</strong><p>Your itinerary is ready to review on this page.</p><button className="text-button" onClick={() => setComplete(false)}>Try the form again</button></div></div> :
-      <form className="contact-form" onSubmit={submit} onChange={() => setMessage('')}>
-        <label className="field"><span>Full name</span><input required name="name" autoComplete="off" placeholder="Sam Rider" maxLength={100} /></label>
-        <div className="form-pair">
-          <label className="field"><span>Email address</span><input required type="email" name="email" autoComplete="off" placeholder="rider@example.com" /></label>
-          <label className="field"><span>Phone number</span><input required type="tel" name="phone" autoComplete="off" placeholder="98765 43210" maxLength={25} /></label>
-        </div>
-        <label className="agreement"><input type="checkbox" required name="agreement" /> <span>I understand this is a demo preview and does not reserve a vehicle.</span></label>
-        {message && <p role="alert" className="field-error">{message}</p>}
-        <button className="button primary" type="submit">Complete Demo Preview</button>
-      </form>}
+    <p className="section-description">Your booking will be linked to {account.email}.</p>
+    <form className="contact-form" onSubmit={submit}>
+      <label className="field"><span>Rider name</span><input required name="name" autoComplete="name" maxLength={100} defaultValue={account.name} /></label>
+      <label className="field"><span>Phone number</span><input required type="tel" name="phone" autoComplete="tel" placeholder="98765 43210" maxLength={25} /></label>
+      <label className="agreement"><input type="checkbox" required name="agreement" /> <span>I’ve checked the pickup city and dates. I’ll wait for confirmation before arriving.</span></label>
+      {error && <p role="alert" className="field-error">{error}</p>}
+      {staleQuote ? <button className="button button-outline" type="button" onClick={onRefresh}>Check latest availability</button> :
+        <button className="button primary" type="submit" disabled={busy}>{busy ? 'Submitting…' : 'Request booking'}</button>}
+    </form>
   </div>
+}
+
+function BookingPageHeading() {
+  return <section className="page-banner"><div className="container"><p className="eyebrow">RIDEON reservations</p><h1>Review your booking</h1><p>Check your bike, pickup city, dates, and rental cost.</p></div></section>
 }
 
 export function Booking() {
   const { id } = useParams()
   const [params] = useSearchParams()
-  const bike = bikes.find(item => item.id === id)
+  const { pathname, search } = useLocation()
+  const auth = useAuth()
   const rental = rentalSearch(readFilters(params))
   const query = searchString(rental)
-  const valid = bike && rental.city && !dateError(rental.pickup, rental.returnDate) && isAvailable(bike, rental)
+  const valid = Boolean(id && rental.city && !dateError(rental.pickup, rental.returnDate))
+  const fleet = useApi<Bike[]>(valid ? '/api/bikes' : null)
+  const bike = fleet.data?.find(item => item.id === id)
+  const quote = useApi<BookingQuote>(bike ? `/api/bikes/${bike.id}/availability${query}` : null)
+  const signIn = `/sign-in?next=${encodeURIComponent(pathname + search)}`
 
   return <>
-    <section className="page-banner"><div className="container"><p className="eyebrow">Demo only</p><h1>Booking preview</h1><p>Review your bike, dates and estimated rental cost.</p></div></section>
+    <BookingPageHeading />
     <div className="container booking-shell">
-      {!valid || !bike ? <EmptyState title="Choose a bike and rental dates" description="A valid pickup city and available dates are needed to open a booking preview." action={<Link className="button primary" to={bike ? `/bikes/${bike.id}${query}#reserve` : '/bikes'}>{bike ? 'Edit rental details' : 'Explore Bikes'}</Link>} /> :
+      {!valid || (fleet.data && !bike) ? <EmptyState title="Choose an available bike and dates" description="Select a pickup city and a date range to review your reservation." action={<Link className="button primary" to="/bikes">Explore Bikes</Link>} /> :
+        !bike ? <AsyncState error={fleet.error} onRetry={fleet.reload} label="Loading the selected bike…" /> :
         <>
-          <nav aria-label="Breadcrumbs" className="breadcrumbs"><Link to="/bikes">Explore Bikes</Link><ChevronRight size={15} /><Link to={`/bikes/${bike.id}${query}#reserve`}>{bikeName(bike)}</Link><ChevronRight size={15} /><span>Booking preview</span></nav>
-          <div className="demo-banner"><Info size={21} /><p><strong>Demo Only.</strong> This preview does not create a reservation or take payment.</p></div>
-          <div className="booking-layout grid"><CustomerForm key={bike.id + query} /><BookingSummary bike={bike} rental={rental} /></div>
+          <nav aria-label="Breadcrumbs" className="breadcrumbs"><Link to="/bikes">Explore Bikes</Link><ChevronRight size={15} /><Link to={`/bikes/${bike.id}${query}#reserve`}>{bikeName(bike)}</Link><ChevronRight size={15} /><span>Review booking</span></nav>
+          {quote.data ? <>
+            <div className="demo-banner"><Info size={21} /><p><strong>Booking requests are reviewed by RIDEON.</strong> Check My Bookings for confirmation.</p></div>
+            <div className="booking-layout grid">
+              {auth.account?.role === 'customer' ?
+                <RiderForm key={bike.id + query + quote.data.dailyRate} account={auth.account} bike={{ ...bike, price: quote.data.dailyRate }} rental={rental} onRefresh={quote.reload} /> :
+                auth.account === undefined ? <AsyncState error={auth.error} onRetry={auth.retry} label="Checking your session…" /> :
+                <div className="panel customer-panel"><h2>Rider account required</h2><p className="section-description">{auth.account ? 'Sign out of the administrator account and sign in as a rider to submit a booking.' : 'Sign in or create a rider account to request this bike.'}</p>{!auth.account && <Link className="button primary" to={signIn}>Sign in to book</Link>}</div>}
+              <BookingSummary bike={{ ...bike, price: quote.data.dailyRate }} rental={rental} />
+            </div>
+          </> : <div className="quote-state">
+            <AsyncState label="Checking dates and rental rate…" error={quote.error} onRetry={quote.reload} />
+            {quote.error && <Link className="button button-outline" to={`/bikes/${bike.id}${query}#reserve`}>Change dates or pickup city</Link>}
+          </div>}
         </>}
     </div>
   </>
