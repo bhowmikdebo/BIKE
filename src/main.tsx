@@ -10,6 +10,7 @@ import { AuthProvider } from './hooks/auth'
 import { FavoritesProvider } from './hooks/favorites'
 import { AccountPage, PortalGuard } from './pages/Account'
 import { MyBookings } from './pages/MyBookings'
+import { Admin } from './pages/admin/Admin'
 import { Booking } from './pages/Booking'
 import { About, Contact } from './pages/Company'
 import { Details } from './pages/Details'
@@ -29,6 +30,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="sign-in" element={<AccountPage />} />
             <Route path="register" element={<AccountPage register />} />
             <Route path="my-bookings" element={<PortalGuard role="customer"><MyBookings /></PortalGuard>} />
+            <Route path="admin" element={<PortalGuard role="admin"><Admin /></PortalGuard>} />
             <Route path="about" element={<About />} />
             <Route path="contact" element={<Contact />} />
             <Route path="*" element={<div className="container route-empty"><h1>Page not found</h1><EmptyState title="Find your way back" description="This route is unavailable." action={<Link to="/" className="button primary">Back to Home</Link>} /></div>} />
