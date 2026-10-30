@@ -1,9 +1,11 @@
 import { useState } from 'react'
-import { Plus, Search } from 'lucide-react'
+import { Bike, CalendarDays, Plus, Search } from 'lucide-react'
+import { useSearchParams } from 'react-router'
+import { ReservationCard, statusLabels } from '../../components/ReservationCard'
 import { AsyncState, Dialog, ImageAsset } from '../../components/ui'
 import { bikeImage, bikeName } from '../../data/fleet'
 import { useApi } from '../../hooks/api'
-import type { ManagedBike } from '../../types'
+import type { BookingRecord, BookingStatus, ManagedBike } from '../../types'
 import { api, errorMessage } from '../../utils/api'
 import { money } from '../../utils/rental'
 import { BikeEditor } from './BikeEditor'
@@ -63,9 +65,63 @@ function FleetManager() {
   </section>
 }
 
+const bookingActions: Partial<Record<BookingStatus, { status: BookingStatus; label: string }[]>> = {
+  pending: [{ status: 'confirmed', label: 'Confirm booking' }, { status: 'cancelled', label: 'Cancel booking' }],
+  confirmed: [{ status: 'in_progress', label: 'Mark picked up' }, { status: 'cancelled', label: 'Cancel booking' }],
+  in_progress: [{ status: 'completed', label: 'Mark returned' }],
+}
+
+function BookingManager() {
+  const bookings = useApi<BookingRecord[]>('/api/admin/bookings')
+  const [filter, setFilter] = useState('')
+  const [selected, setSelected] = useState<{ booking: BookingRecord; status: BookingStatus; label: string }>()
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [message, setMessage] = useState('')
+  const filtered = bookings.data?.filter(booking => !filter || booking.status === filter)
+
+  async function update() {
+    if (!selected || busy) return
+    setBusy(true)
+    setError('')
+    try {
+      await api(`/api/admin/bookings/${selected.booking.id}/status`, { method: 'PATCH', body: { status: selected.status } })
+      setMessage(`${selected.booking.id} · ${statusLabels[selected.status]}`)
+      setSelected(undefined)
+      bookings.reload()
+    } catch (error) {
+      setError(errorMessage(error))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return <section aria-labelledby="manage-bookings">
+    <div className="portal-toolbar"><div><h2 id="manage-bookings">Reservations</h2><p>Review requests and update pickup or return status.</p></div>
+      <label className="field"><span className="sr-only">Booking status</span><select value={filter} onChange={event => setFilter(event.target.value)}><option value="">All statuses</option>{Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+    </div>
+    {message && <p className="form-success" role="status">{message}</p>}
+    {!filtered ? <AsyncState error={bookings.error} onRetry={bookings.reload} label="Loading reservations…" /> :
+      !filtered.length ? <p className="async-state">{filter ? 'No reservations have this status.' : 'New booking requests will appear here.'}</p> :
+        <div className="reservation-grid">{filtered.map(booking => <ReservationCard admin key={booking.id} booking={booking}>
+          <div className="portal-actions">{bookingActions[booking.status]?.map(action => <button className={`button ${action.status === 'cancelled' ? 'button-outline' : 'primary'}`} type="button" key={action.status} onClick={() => { setSelected({ booking, ...action }); setError('') }}>{action.label}</button>)}</div>
+        </ReservationCard>)}</div>}
+    {selected && <Dialog title={selected.label} onClose={() => { if (!busy) setSelected(undefined) }}><div className="dialog-body">
+      <p>{selected.booking.bikeName} · {selected.booking.id} · {selected.booking.riderName}</p>
+      {error && <p className="field-error" role="alert">{error}</p>}
+      <div className="portal-actions"><button className="button button-outline" type="button" disabled={busy} onClick={() => setSelected(undefined)}>Go back</button><button className="button primary" type="button" disabled={busy} onClick={update}>{busy ? 'Saving…' : selected.label}</button></div>
+    </div></Dialog>}
+  </section>
+}
+
 export function Admin() {
+  const [params, setParams] = useSearchParams()
+  const bookingTab = params.get('tab') === 'bookings'
   return <>
     <section className="page-banner"><div className="container"><p className="eyebrow">RIDEON administration</p><h1>Admin portal</h1><p>Manage rental bikes and review customer reservations.</p></div></section>
-    <div className="container portal-content"><FleetManager /></div>
+    <div className="container portal-content">
+      <nav aria-label="Admin sections" className="portal-tabs"><button type="button" aria-pressed={!bookingTab} onClick={() => setParams({})}><Bike size={19} />Fleet</button><button type="button" aria-pressed={bookingTab} onClick={() => setParams({ tab: 'bookings' })}><CalendarDays size={18} />Bookings</button></nav>
+      {bookingTab ? <BookingManager /> : <FleetManager />}
+    </div>
   </>
 }
