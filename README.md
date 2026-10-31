@@ -1,45 +1,61 @@
 # RIDEON
 
-RIDEON is a frontend motorcycle and scooter rental demo built with React, TypeScript, Vite, Tailwind CSS, React Router, Motion, and Lucide React.
+RIDEON is a motorcycle and scooter rental website with a customer booking portal and an admin portal. It uses React, TypeScript, Vite, Tailwind CSS, and a Node.js API backed by a local SQLite database. The first run loads the eight original fleet listings.
 
 ## Run locally
 
-Use Node.js 24 LTS and pnpm 11.
+Use Node.js 24.15 or newer and pnpm 11.
 
 ```sh
 pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-Open the URL printed by Vite, typically [http://localhost:5173](http://localhost:5173).
+Open [the RIDEON site](http://127.0.0.1:5173). The dev command starts Vite and the API together. SQLite saves accounts, uploaded images, fleet changes, and reservations in `.rideon/rideon.sqlite`. The database directory is Git-ignored.
+
+For a built copy served by Node, stop the dev server first.
+
+```sh
+pnpm build
+pnpm start
+```
+
+Open [the built site](http://127.0.0.1:4173). Copy `.env.example` to `.env` to change the port, database location, or public HTTPS origin. The server binds to loopback. For HTTPS via a reverse proxy, set `RIDEON_ORIGIN` to the public origin so that session cookies use the Secure attribute.
+
+## Create an administrator
+
+Run the following in an interactive terminal using the same database as the website.
+
+```sh
+pnpm admin:create
+```
+
+Enter an email, display name, and a password of at least 12 characters. The password prompt hides input. Open [the admin portal](http://127.0.0.1:5173/admin) and sign in with those credentials. Public signup creates rider accounts only.
+
+In the **Fleet** tab, admins can add or edit bikes, rates, pickup cities, specs, and photos. Archiving removes a bike from the public catalog while preserving its existing reservations. Publish it again from the same tab. Each fleet listing represents one bookable bike, even if it is offered in multiple pickup cities.
+
+In the **Bookings** tab, admins can confirm or cancel a request, mark a confirmed bike as picked up on or after the scheduled date, and record its return.
+
+## Rider booking flow
+
+1. Browse available bikes by pickup city and dates. Open a bike and review its rate.
+2. Sign in or create a rider account, then submit the rider’s name and phone number.
+3. Open **My Bookings** to view the reservation reference, pickup details, price, and status. Riders can cancel pending or confirmed requests through the pickup date.
+
+The server validates date ranges and prices when a booking is submitted. Pending, confirmed, and picked-up reservations reserve the selected dates. A return date is exclusive, so a second rental can start that day. Each booking retains the daily rate and bike name recorded at submission. Requests await administrator confirmation. The portal provides the confirmation status.
+
+## Verification
 
 ```sh
 pnpm typecheck
+pnpm test
 pnpm build
-pnpm preview
 ```
 
-The production build is written to `dist/`. Static hosting should serve `index.html` for application routes such as `/bikes/classic-350` and `/booking/classic-350`.
+The API test uses an isolated database. It checks admin authorization, rider signup, image persistence, conflicting reservations, cancellation, and status changes.
 
-## Demo experience
+## Data and integrations
 
-- Browse motorcycles and scooters by category and search by city, dates, model, or brand. Filter by daily rate, engine size, or transmission and sort by price or name.
-- Compare up to three bikes and save favorites on the current device. Favorites use browser local storage. Other form entries stay in the current page.
-- View model details and choose a pickup city and dates. The estimate multiplies the daily rate by the number of calendar days between pickup and return. Demo availability includes short service windows.
-- Review the trip and try the booking and contact forms with sample information. Sign-in, newsletter, terms, privacy, and social controls have demo feedback.
-- The homepage, fleet, bike details, booking preview, About, and Contact pages support desktop and mobile layouts.
+The SQLite schema and transactional data access live in `server/`. The browser uses JSON endpoints under `/api`, so storage and authentication can be replaced when the Supabase requirements are available. No Supabase account or credentials are needed for this version.
 
-Fleet records are in `src/data/fleet.ts`. Core date handling, pricing helpers, and demo availability are in `src/utils/rental.ts`. Shared UI lives in `src/components/` and routes in `src/pages/`.
-
-## Visual assets
-
-The optimized WebP imagery in `public/images/` was created with the built-in ImageGen tool. Model images are illustrative, and the detail gallery uses crops of each bike illustration. The generation prompts covered:
-
-- A widescreen editorial hero photograph of a rider on a black and brushed-silver roadster in the Indian Himalayas, with the rider at right and a charcoal mountain shadow at left.
-- Consistent three-quarter studio views of the eight sample bike models and a spare scrambler, each framed separately on a warm gray backdrop.
-- Five editorial category scenes featuring a sport bike, cruiser, scooter, adventure bike, and commuter bike in distinct environments.
-- A winding Himalayan road with a solo rider heading into the distance, with dark open space at the left for campaign copy.
-
-## Backend phase
-
-Deferred work includes account authentication, real inventory and availability, reservations, payment and deposit processing, rental policy and document verification, and delivery of contact messages or newsletter subscriptions.
+Payments, password recovery, email or SMS delivery, and the contact and newsletter integrations are outside this phase. The catalog starts with illustrative ImageGen assets in `public/images/` and supports administrator-supplied photos.
