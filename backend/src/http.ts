@@ -16,3 +16,12 @@ export function checkOrigin(request: Request, allowedOrigin: string) {
     throw new HttpError(403, 'This request must come from RIDEON.')
   }
 }
+
+export function authCallbackUrl(request: Request, origin: string, path: string) {
+  if (origin) return new URL(path, origin).href
+  const host = request.get('host') ?? ''
+  if (!/^(localhost|127\.0\.0\.1)(:\d{1,5})?$/.test(host)) {
+    throw new HttpError(503, 'Account links are unavailable on this hostname.')
+  }
+  return new URL(path, `http://${host}`).href
+}
