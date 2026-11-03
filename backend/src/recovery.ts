@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto'
 import type { Request, RequestHandler, Response, Router } from 'express'
 import { readCookie } from './auth.ts'
-import { HttpError } from './http.ts'
+import { authCallbackUrl, HttpError } from './http.ts'
 import type { SupabaseGateway } from './supabase.ts'
 import { accountEmail, confirmedPassword, object } from './validation.ts'
 
@@ -9,15 +9,6 @@ const callbackPath = '/api/auth/recovery/callback'
 const verifierCookie = 'rideon_reset_verifier'
 const accessCookie = 'rideon_reset_access'
 const refreshCookie = 'rideon_reset_refresh'
-
-function recoveryRedirect(request: Request, origin: string) {
-  if (origin) return new URL(callbackPath, origin).href
-  const host = request.get('host') ?? ''
-  if (!/^(localhost|127\.0\.0\.1)(:\d{1,5})?$/.test(host)) {
-    throw new HttpError(503, 'Password recovery is unavailable on this hostname.')
-  }
-  return new URL(callbackPath, `http://${host}`).href
-}
 
 export function mountPasswordRecovery(
   router: Router,
@@ -41,7 +32,7 @@ export function mountPasswordRecovery(
   router.post('/auth/forgot-password', parseJson, async (request, response) => {
     limit(request)
     const email = accountEmail(object(request.body).email)
-    const verifier = await gateway.sendRecoveryEmail(email, recoveryRedirect(request, origin))
+    const verifier = await gateway.sendRecoveryEmail(email, authCallbackUrl(request, origin, callbackPath))
     clearRecovery(response)
     // Return the same response shape even when the provider does not issue a verifier.
     const placeholder = JSON.stringify(randomBytes(28).toString('hex') + '/recovery')
