@@ -25,14 +25,14 @@ function authFailure(error: { status?: number; code?: string }, message: string)
 export function createSupabaseGateway(config: Config): SupabaseGateway {
   const options = { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
   const client = () => createClient(config.url, config.key, { auth: options })
-  const recoveryStorageKey = 'rideon-recovery'
-  const verifierKey = recoveryStorageKey + '-code-verifier'
+  const storageKey = 'rideon-auth'
+  const verifierKey = storageKey + '-code-verifier'
 
-  function recoveryClient(verifier?: string) {
+  function pkceClient(verifier?: string) {
     const storage = new Map<string, string>()
     if (verifier) storage.set(verifierKey, verifier)
     const auth = createClient(config.url, config.key, { auth: {
-      ...options, flowType: 'pkce', storageKey: recoveryStorageKey, persistSession: true,
+      ...options, flowType: 'pkce', storageKey, persistSession: true,
       storage: {
         getItem: key => storage.get(key) ?? null,
         setItem: (key, value) => { storage.set(key, value) },
@@ -40,6 +40,13 @@ export function createSupabaseGateway(config: Config): SupabaseGateway {
       },
     } }).auth
     return { auth, readVerifier: () => storage.get(verifierKey) ?? null }
+  }
+
+  async function exchangeCode(code: string, verifier: string, recovery: boolean) {
+    const { data, error } = await pkceClient(verifier).auth.exchangeCodeForSession(code)
+    if (error && (!error.status || error.status >= 500)) throw authFailure(error, 'Could not verify the account link.')
+    const isRecovery = 'redirectType' in data && data.redirectType === 'recovery'
+    return isRecovery === recovery ? data.session : null
   }
 
   return {
@@ -72,7 +79,7 @@ export function createSupabaseGateway(config: Config): SupabaseGateway {
       return data.session
     },
     async sendRecoveryEmail(email, redirectTo) {
-      const { auth, readVerifier } = recoveryClient()
+      const { auth, readVerifier } = pkceClient()
       const { error } = await auth.resetPasswordForEmail(email, { redirectTo })
       if (error) {
         if (error.code === 'user_not_found' || error.code === 'over_email_send_rate_limit') return null
@@ -80,10 +87,8 @@ export function createSupabaseGateway(config: Config): SupabaseGateway {
       }
       return readVerifier()
     },
-    async exchangeRecoveryCode(code, verifier) {
-      const { data, error } = await recoveryClient(verifier).auth.exchangeCodeForSession(code)
-      if (error && (!error.status || error.status >= 500)) throw authFailure(error, 'Could not verify the reset link.')
-      return 'redirectType' in data && data.redirectType === 'recovery' ? data.session : null
+    exchangeRecoveryCode(code, verifier) {
+      return exchangeCode(code, verifier, true)
     },
     async updateRecoveryPassword(accessToken, refreshToken, password) {
       const auth = client().auth
