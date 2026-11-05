@@ -2,10 +2,11 @@ import express from 'express'
 import type { ErrorRequestHandler, Request, Response } from 'express'
 import { extname, resolve } from 'node:path'
 import { createSessionManager } from './auth.ts'
+import { mountAccountEntry } from './auth-entry.ts'
 import { checkOrigin, HttpError } from './http.ts'
 import { mountPasswordRecovery } from './recovery.ts'
 import type { SupabaseGateway } from './supabase.ts'
-import { accountEmail, accountName, bikeInput, blockedDates, bookingInput, confirmedPassword, hostProfile, object, password, rental, uploadedImage } from './validation.ts'
+import { accountEmail, bikeInput, blockedDates, bookingInput, hostProfile, object, password, rental, uploadedImage } from './validation.ts'
 
 function resourceId(request: Request, parameter = 'id') {
   const id = request.params[parameter]
@@ -59,17 +60,12 @@ export function createApp(gateway: SupabaseGateway, { origin = '', frontendDir =
     const session = await gateway.signIn(accountEmail(raw.email), password(raw.password))
     response.json(await sessions.start(response, session))
   })
-  router.post('/auth/register', smallJson, async (request, response) => {
-    limitAuthentication(request)
-    const raw = object(request.body)
-    const session = await gateway.register(accountName(raw.name), accountEmail(raw.email), confirmedPassword(raw.password, raw.confirmPassword))
-    response.status(201).json(session ? await sessions.start(response, session) : null)
-  })
   router.post('/auth/sign-out', async (request, response) => {
     await sessions.end(request, response)
     response.json(null)
   })
 
+  mountAccountEntry(router, gateway, { origin, parseJson: smallJson, limit: limitAuthentication, sessions })
   mountPasswordRecovery(router, gateway, { origin, parseJson: smallJson, limit: limitAuthentication, clearSession: sessions.clear })
 
   router.get('/bikes', async (request, response) => {

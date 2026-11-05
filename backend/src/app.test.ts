@@ -27,7 +27,8 @@ test('Express forwards validated requests with the current rider identity and pr
   let registrationCount = 0
   const gateway: SupabaseGateway = {
     signIn: async email => testSession(email.startsWith('admin') ? 'admin' : 'customer'),
-    register: async () => { registrationCount++; return null },
+    register: async () => { registrationCount++; return { session: null, verifier: null } },
+    exchangeSignInCode: async () => null,
     sendRecoveryEmail: async () => null,
     exchangeRecoveryCode: async () => null,
     updateRecoveryPassword: async () => {},

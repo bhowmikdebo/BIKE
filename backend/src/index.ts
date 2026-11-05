@@ -13,8 +13,7 @@ if (new URL(url).protocol !== 'https:' && !['127.0.0.1', 'localhost'].includes(n
   throw new Error('Use an HTTPS URL for a hosted Supabase project.')
 }
 const frontendDir = fileURLToPath(new URL('../../frontend/dist/', import.meta.url))
-const emailRedirect = process.env.SUPABASE_EMAIL_REDIRECT || (origin ? origin + '/sign-in' : undefined)
-const gateway = createSupabaseGateway({ url, key, emailRedirect })
+const gateway = createSupabaseGateway({ url, key })
 const server = createApp(gateway, { origin, frontendDir }).listen(port, '127.0.0.1', () => {
   console.log(`RIDEON Express API http://127.0.0.1:${port}`)
 })

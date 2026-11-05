@@ -2,12 +2,13 @@ import { createClient } from '@supabase/supabase-js'
 import type { Session } from '@supabase/supabase-js'
 import { HttpError } from './http.ts'
 
-interface Config { url: string; key: string; emailRedirect?: string }
+interface Config { url: string; key: string }
 
 export interface SupabaseGateway {
   rpc<T>(name: string, args?: Record<string, unknown>, accessToken?: string): Promise<T>
   signIn(email: string, password: string): Promise<Session>
-  register(name: string, email: string, password: string): Promise<Session | null>
+  register(name: string, email: string, password: string, redirectTo: string): Promise<{ session: Session | null; verifier: string | null }>
+  exchangeSignInCode(code: string, verifier: string): Promise<Session | null>
   sendRecoveryEmail(email: string, redirectTo: string): Promise<string | null>
   exchangeRecoveryCode(code: string, verifier: string): Promise<Session | null>
   updateRecoveryPassword(accessToken: string, refreshToken: string, password: string): Promise<void>
@@ -71,12 +72,16 @@ export function createSupabaseGateway(config: Config): SupabaseGateway {
       if (!data.session) throw new HttpError(401, 'Unable to start a session.')
       return data.session
     },
-    async register(name, email, password) {
-      const { data, error } = await client().auth.signUp({
-        email, password, options: { data: { name }, emailRedirectTo: config.emailRedirect },
+    async register(name, email, password, redirectTo) {
+      const { auth, readVerifier } = pkceClient()
+      const { data, error } = await auth.signUp({
+        email, password, options: { data: { name }, emailRedirectTo: redirectTo },
       })
       if (error) throw authFailure(error, 'Could not create the account. Try signing in if you already have one.')
-      return data.session
+      return { session: data.session, verifier: readVerifier() }
+    },
+    exchangeSignInCode(code, verifier) {
+      return exchangeCode(code, verifier, false)
     },
     async sendRecoveryEmail(email, redirectTo) {
       const { auth, readVerifier } = pkceClient()
