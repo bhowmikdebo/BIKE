@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef } from 'react'
+import { useId, useLayoutEffect, useRef } from 'react'
 import type { ImgHTMLAttributes, ReactNode } from 'react'
 import { Bike, X } from 'lucide-react'
 import { motion, useReducedMotion } from 'motion/react'
@@ -35,7 +35,7 @@ export function ImageAsset({ onError, ...props }: ImgHTMLAttributes<HTMLImageEle
 export function Dialog({ title, onClose, children, className = '' }: { title: string; onClose: () => void; children: ReactNode; className?: string }) {
   const ref = useRef<HTMLDialogElement>(null)
   const titleId = useId()
-  useEffect(() => {
+  useLayoutEffect(() => {
     const dialog = ref.current
     dialog?.showModal()
     return () => { dialog?.close() }
