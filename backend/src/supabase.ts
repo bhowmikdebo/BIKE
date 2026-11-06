@@ -8,6 +8,7 @@ export interface SupabaseGateway {
   rpc<T>(name: string, args?: Record<string, unknown>, accessToken?: string): Promise<T>
   signIn(email: string, password: string): Promise<Session>
   register(name: string, email: string, password: string, redirectTo: string): Promise<{ session: Session | null; verifier: string | null }>
+  startGoogle(redirectTo: string): Promise<{ url: string; verifier: string }>
   exchangeSignInCode(code: string, verifier: string): Promise<Session | null>
   sendRecoveryEmail(email: string, redirectTo: string): Promise<string | null>
   exchangeRecoveryCode(code: string, verifier: string): Promise<Session | null>
@@ -79,6 +80,22 @@ export function createSupabaseGateway(config: Config): SupabaseGateway {
       })
       if (error) throw authFailure(error, 'Could not create the account. Try signing in if you already have one.')
       return { session: data.session, verifier: readVerifier() }
+    },
+    async startGoogle(redirectTo) {
+      const settings = await fetch(new URL('/auth/v1/settings', config.url), {
+        headers: { apikey: config.key }, signal: AbortSignal.timeout(8000),
+      }).catch(() => { throw new HttpError(503, 'Google sign-in is temporarily unavailable.') })
+      if (!settings.ok) throw new HttpError(503, 'Google sign-in is temporarily unavailable.')
+      const providers = await settings.json() as { external?: { google?: boolean } }
+      if (!providers.external?.google) throw new HttpError(503, 'Google sign-in hasn’t been enabled yet. You can continue with email.')
+      const { auth, readVerifier } = pkceClient()
+      const { data, error } = await auth.signInWithOAuth({
+        provider: 'google', options: { redirectTo, skipBrowserRedirect: true, queryParams: { prompt: 'select_account' } },
+      })
+      if (error) throw authFailure(error, 'Could not start Google sign-in. Try again.')
+      const verifier = readVerifier()
+      if (!data.url || !verifier) throw new HttpError(503, 'Could not start Google sign-in. Try again.')
+      return { url: data.url, verifier }
     },
     exchangeSignInCode(code, verifier) {
       return exchangeCode(code, verifier, false)

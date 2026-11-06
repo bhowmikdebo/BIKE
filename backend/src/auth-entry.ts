@@ -7,7 +7,9 @@ import type { SupabaseGateway } from './supabase.ts'
 import { accountEmail, accountName, confirmedPassword, object } from './validation.ts'
 
 const emailCallback = '/api/auth/email/callback'
+const googleCallback = '/api/auth/google/callback'
 const emailCookie = 'rideon_email_pending'
+const googleCookie = 'rideon_google_pending'
 
 function readPending(request: Request, name: string) {
   try {
@@ -42,6 +44,7 @@ export function mountAccountEntry(router: Router, gateway: SupabaseGateway, { or
 }) {
   const cookie = { httpOnly: true, sameSite: 'lax', secure: origin.startsWith('https://') } as const
   const emailOptions = { ...cookie, path: emailCallback }
+  const googleOptions = { ...cookie, path: googleCallback }
 
   router.post('/auth/register', parseJson, async (request, response) => {
     limit(request)
@@ -69,5 +72,31 @@ export function mountAccountEntry(router: Router, gateway: SupabaseGateway, { or
       } catch { /* Email confirmation can complete independently of sign-in. */ }
     }
     returnToSignIn(response, next, 'confirmed')
+  })
+
+  router.post('/auth/google/start', parseJson, async (request, response) => {
+    limit(request)
+    const { next } = object(request.body)
+    const { url, verifier } = await gateway.startGoogle(authCallbackUrl(request, origin, googleCallback))
+    response.cookie(googleCookie, JSON.stringify({ verifier, next: authReturnPath(next) }), { ...googleOptions, maxAge: 600_000 })
+    response.json({ url })
+  })
+
+  router.get('/auth/google/callback', async (request, response) => {
+    response.set('Referrer-Policy', 'no-referrer')
+    const { verifier, next } = readPending(request, googleCookie)
+    response.clearCookie(googleCookie, googleOptions)
+    const code = callbackCode(request)
+    if (request.query.error === 'access_denied') return returnToSignIn(response, next, 'google-cancelled')
+    if (code && verifier) {
+      try {
+        const session = await gateway.exchangeSignInCode(code, verifier)
+        if (session) {
+          await sessions.start(response, session)
+          return returnToSignIn(response, next)
+        }
+      } catch { /* Return the user to the form if the session cannot be established. */ }
+    }
+    returnToSignIn(response, next, 'google-failed')
   })
 }
