@@ -1,0 +1,131 @@
+:where(:root, .theme-swatch) {
+  --paper: #f8f7f4;
+  --surface: #fff;
+  --accent: #ff633e;
+}
+
+:root {
+  color-scheme: light;
+  --ink: #171717;
+  --muted: #5e5a53;
+  --line: #e1ded7;
+  --control-line: #a09788;
+  --soft: #efede8;
+  --control: #f9f8f5;
+  --accent-text: #a63117;
+  --accent-ink: #17120f;
+  --accent-hover: #ff805f;
+  --accent-soft: #fbe9e1;
+  --accent-line: #edbaa8;
+  --photo-accent: #ff997f;
+  --footer-bg: #1b1b1a;
+  --footer-ink: #f6f3ec;
+  --footer-muted: #d3cfc7;
+  --footer-control: #272624;
+  --footer-line: #656058;
+  --steps-bg: #20201e;
+  --steps-icon: #42302a;
+  --media-placeholder: #b3aaa0;
+  --error: #a12918;
+  --success: #235039;
+  --success-bg: #ecf3ed;
+  --success-line: #c9dbce;
+  --pending: #654351;
+  --pending-bg: #f4e7ec;
+  --progress: #204778;
+  --progress-bg: #e4edf8;
+  --select-indicator: url("data:image/svg+xml,%3Csvg width='14' height='14' fill='none' stroke='%235a554d' stroke-width='1.6' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+}
+
+[data-theme="asphalt"] {
+  --paper: #111317;
+  --surface: #1b1e25;
+  --accent: #ff815d;
+  --ink: #f4f1ef;
+  --muted: #b5b8c1;
+  --soft: #22262d;
+}
+
+[data-theme="coast"] {
+  --paper: #0e1827;
+  --surface: #17263b;
+  --accent: #76c9ff;
+  --ink: #edf6ff;
+  --muted: #afc4d8;
+  --soft: #1f3148;
+}
+
+[data-theme="forest"] {
+  --paper: #101913;
+  --surface: #19291f;
+  --accent: #9dde9e;
+  --ink: #eef7ed;
+  --muted: #b3c7b5;
+  --soft: #22372a;
+}
+
+[data-theme="desert"] {
+  --paper: #231710;
+  --surface: #33241a;
+  --accent: #ffca76;
+  --ink: #fff3e7;
+  --muted: #d7c1ad;
+  --soft: #423023;
+}
+
+[data-theme="circuit"] {
+  --paper: #1b1327;
+  --surface: #2a1e3a;
+  --accent: #d7a8ff;
+  --ink: #f8efff;
+  --muted: #c8b7d8;
+  --soft: #372747;
+}
+
+:root[data-theme]:not([data-theme="light"]) {
+  color-scheme: dark;
+  --line: color-mix(in srgb, var(--ink) 19%, var(--surface));
+  --control-line: color-mix(in srgb, var(--ink) 44%, var(--surface));
+  --control: var(--paper);
+  --accent-text: var(--accent);
+  --accent-hover: color-mix(in srgb, var(--accent) 84%, white);
+  --accent-soft: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  --accent-line: color-mix(in srgb, var(--accent) 52%, var(--surface));
+  --photo-accent: var(--accent-hover);
+  --footer-bg: color-mix(in srgb, var(--paper) 72%, black);
+  --footer-ink: var(--ink);
+  --footer-muted: var(--muted);
+  --footer-control: var(--surface);
+  --footer-line: var(--line);
+  --steps-bg: var(--surface);
+  --steps-icon: var(--accent-soft);
+  --media-placeholder: var(--soft);
+  --error: #ffaba1;
+  --success: #b1ebc0;
+  --success-bg: #193428;
+  --success-line: #3d7756;
+  --pending: #f9cedf;
+  --pending-bg: #412838;
+  --progress: #bddbff;
+  --progress-bg: #253957;
+  --select-indicator: url("data:image/svg+xml,%3Csvg width='14' height='14' fill='none' stroke='%23d9d5df' stroke-width='1.6' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+}
+
+.theme-toggle[aria-expanded="true"] { background: var(--accent-soft); color: var(--accent-text); }
+.dialog.theme-dialog { width: min(calc(100% - 28px), 550px); border: 1px solid var(--line); }
+.theme-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.theme-option { display: flex; align-items: center; gap: 10px; min-height: 64px; padding: 9px; border: 1px solid var(--control-line); border-radius: 9px; text-align: left; }
+.theme-option:hover { background: var(--soft); }
+.theme-option[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent-line); }
+.theme-option-label { display: grid; gap: 3px; min-width: 0; line-height: 1.25; }
+.theme-option-label strong { font-size: .875rem; }
+.theme-option-label small { color: var(--muted); font-size: .75rem; }
+.theme-option-check { color: var(--accent-text); margin-inline-start: auto; }
+.theme-swatch { position: relative; flex: 0 0 36px; height: 32px; background: var(--paper); border: 1px solid var(--control-line); border-radius: 6px; }
+.theme-swatch > span:first-child { position: absolute; inset: 7px 5px 5px; background: var(--surface); border-radius: 3px; }
+.theme-swatch > span:last-child { position: absolute; left: 10px; bottom: 9px; width: 14px; height: 4px; border-radius: 2px; background: var(--accent); }
+
+@media (max-width: 480px) {
+  .theme-options { grid-template-columns: 1fr; gap: 7px; }
+  .theme-option { min-height: 48px; padding: 7px 10px; }
+}
