@@ -4,26 +4,42 @@ import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react
 import { NewPasswordFields } from '../components/NewPasswordFields'
 import { AsyncState, EmptyState } from '../components/ui'
 import { useAuth } from '../hooks/auth'
+import { authReturnPath } from '../../../shared/auth.ts'
 import type { Account } from '../../../shared/types.ts'
-import { errorMessage } from '../utils/api'
+import { api, errorMessage } from '../utils/api'
 
 function destination(next: string | null, role: Account['role']) {
-  if (next?.startsWith('/') && !next.startsWith('//') && !next.includes('\\') && !next.startsWith('/sign-in') && !next.startsWith('/register')) return next
-  return role === 'admin' ? '/admin' : '/my-bookings'
+  return next ?? (role === 'admin' ? '/admin' : '/my-bookings')
 }
 
 export function AccountPage({ register = false }: { register?: boolean }) {
   const auth = useAuth()
   const [params] = useSearchParams()
   const navigate = useNavigate()
-  const [busy, setBusy] = useState(false)
+  const [busy, setBusy] = useState<'email' | 'google' | null>(null)
   const [error, setError] = useState('')
+  const [googleError, setGoogleError] = useState('')
   const [confirmEmail, setConfirmEmail] = useState(false)
-  const next = params.get('next')
+  const next = authReturnPath(params.get('next'))
+  const nextQuery = next ? `?next=${encodeURIComponent(next)}` : ''
   const admin = next === '/admin'
   const hosting = next === '/host' || next?.startsWith('/host?')
   const title = register ? hosting ? 'Create a host account' : 'Create your RIDEON account' : admin ? 'Staff sign in' : hosting ? 'Sign in to host' : 'Sign in to RIDEON'
   if (auth.account) return <Navigate to={destination(next, auth.account.role)} replace />
+
+  async function continueWithGoogle() {
+    if (busy) return
+    setBusy('google')
+    setError('')
+    setGoogleError('')
+    try {
+      const { url } = await api<{ url: string }>('/api/auth/google/start', { method: 'POST', body: { next } })
+      window.location.assign(url)
+    } catch (error) {
+      setGoogleError(errorMessage(error))
+      setBusy(null)
+    }
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -33,16 +49,17 @@ export function AccountPage({ register = false }: { register?: boolean }) {
     const password = String(details.get('password'))
     const confirmPassword = String(details.get('confirmPassword') ?? '')
     if (register && password !== confirmPassword) { setError('Passwords do not match.'); return }
-    setBusy(true)
+    setBusy('email')
     setError('')
+    setGoogleError('')
     try {
-      const account = register ? await auth.register(String(details.get('name')), email, password, confirmPassword) : await auth.signIn(email, password)
+      const account = register ? await auth.register(String(details.get('name')), email, password, confirmPassword, next) : await auth.signIn(email, password)
       if (account) navigate(destination(next, account.role), { replace: true })
       else setConfirmEmail(true)
     } catch (error) {
       setError(errorMessage(error))
     } finally {
-      setBusy(false)
+      setBusy(null)
     }
   }
 
@@ -50,20 +67,29 @@ export function AccountPage({ register = false }: { register?: boolean }) {
     <section className="panel account-panel"><p className="eyebrow">{admin ? 'Marketplace staff' : hosting ? 'For bike owners' : 'RIDEON marketplace'}</p><h1>{title}</h1>
       <p>{admin ? 'Sign in with a RIDEON staff account.' : hosting ? 'Set up your storefront, list bikes, and manage requests. You can rent a bike with the same account.' : 'Book bikes or open a host storefront with the same account.'}</p>
       {!register && params.get('reset') === 'complete' && <p className="account-feedback form-success" role="status">Password updated. Sign in with your new password.</p>}
-      {register && confirmEmail ? <div className="form-success" role="status">
+      {register && confirmEmail ? <div className="account-feedback form-success" role="status">
         <p>Open the confirmation link in your email, then return here and sign in.</p>
-      </div> : <form className="contact-form" onSubmit={submit} onChange={() => setError('')} key={String(register)}>
-        {register && <label className="field"><span>Full name</span><input name="name" required maxLength={100} autoComplete="name" /></label>}
-        <label className="field"><span>Email address</span><input name="email" type="email" required maxLength={254} autoComplete="username" /></label>
-        {register ? <NewPasswordFields /> : <>
-          <label className="field"><span>Password</span><input name="password" type="password" required maxLength={128} autoComplete="current-password" /></label>
-          <Link className="forgot-password-link" to={next ? `/forgot-password?next=${encodeURIComponent(next)}` : '/forgot-password'}>Forgot password?</Link>
-        </>}
-        {error && <p className="field-error" role="alert">{error}</p>}
-        <button className="button primary w-full" type="submit" disabled={busy}>{busy ? 'Please wait…' : register ? 'Create account' : 'Sign in'}</button>
-      </form>}
+      </div> : <>
+        <div className="account-provider">
+          <button className="button button-outline w-full" type="button" onClick={continueWithGoogle} disabled={busy !== null}>
+            {busy === 'google' ? 'Opening Google…' : register ? 'Sign up with Google' : 'Sign in with Google'}
+          </button>
+          {googleError && <p className="field-error" role="alert">{googleError}</p>}
+          <p className="account-divider">or use email</p>
+        </div>
+        <form className="contact-form" onSubmit={submit} onChange={() => setError('')}>
+          {register && <label className="field"><span>Full name</span><input name="name" required maxLength={100} autoComplete="name" /></label>}
+          <label className="field"><span>Email address</span><input name="email" type="email" required maxLength={254} autoComplete="username" /></label>
+          {register ? <NewPasswordFields /> : <>
+            <label className="field"><span>Password</span><input name="password" type="password" required maxLength={128} autoComplete="current-password" /></label>
+            <Link className="forgot-password-link" to={'/forgot-password' + nextQuery}>Forgot password?</Link>
+          </>}
+          {error && <p className="field-error" role="alert">{error}</p>}
+          <button className="button primary w-full" type="submit" disabled={busy !== null}>{busy === 'email' ? 'Please wait…' : register ? 'Create account' : 'Sign in'}</button>
+        </form>
+      </>}
       {admin && <p className="account-switch">Want to list your own bikes? <Link to="/host">Become a host</Link></p>}
-      {!admin && <p className="account-switch">{register ? 'Already have an account? ' : 'New to RIDEON? '}<Link to={`${register ? '/sign-in' : '/register'}${params.size ? '?' + params.toString() : ''}`}>{register ? 'Sign in' : 'Create an account'}</Link></p>}
+      {!admin && <p className="account-switch">{register ? 'Already have an account? ' : 'New to RIDEON? '}<Link to={(register ? '/sign-in' : '/register') + nextQuery}>{register ? 'Sign in' : 'Create an account'}</Link></p>}
     </section>
   </div>
 }
