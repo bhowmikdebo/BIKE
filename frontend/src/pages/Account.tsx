@@ -19,9 +19,10 @@ export function AccountPage({ register = false }: { register?: boolean }) {
   const [busy, setBusy] = useState<'email' | 'google' | null>(null)
   const [error, setError] = useState('')
   const [googleError, setGoogleError] = useState('')
-  const [confirmEmail, setConfirmEmail] = useState(false)
+  const [confirmEmail, setConfirmEmail] = useState('')
   const next = authReturnPath(params.get('next'))
   const nextQuery = next ? `?next=${encodeURIComponent(next)}` : ''
+  const authStatus = params.get('auth')
   const admin = next === '/admin'
   const hosting = next === '/host' || next?.startsWith('/host?')
   const title = register ? hosting ? 'Create a host account' : 'Create your RIDEON account' : admin ? 'Staff sign in' : hosting ? 'Sign in to host' : 'Sign in to RIDEON'
@@ -55,7 +56,7 @@ export function AccountPage({ register = false }: { register?: boolean }) {
     try {
       const account = register ? await auth.register(String(details.get('name')), email, password, confirmPassword, next) : await auth.signIn(email, password)
       if (account) navigate(destination(next, account.role), { replace: true })
-      else setConfirmEmail(true)
+      else setConfirmEmail(email)
     } catch (error) {
       setError(errorMessage(error))
     } finally {
@@ -67,8 +68,12 @@ export function AccountPage({ register = false }: { register?: boolean }) {
     <section className="panel account-panel"><p className="eyebrow">{admin ? 'Marketplace staff' : hosting ? 'For bike owners' : 'RIDEON marketplace'}</p><h1>{title}</h1>
       <p>{admin ? 'Sign in with a RIDEON staff account.' : hosting ? 'Set up your storefront, list bikes, and manage requests. You can rent a bike with the same account.' : 'Book bikes or open a host storefront with the same account.'}</p>
       {!register && params.get('reset') === 'complete' && <p className="account-feedback form-success" role="status">Password updated. Sign in with your new password.</p>}
+      {authStatus === 'confirmed' && <p className="account-feedback form-success" role="status">Email confirmed. You can now sign in.</p>}
+      {authStatus === 'email-link' && <p className="account-feedback field-error" role="alert">This confirmation link is invalid or has expired. Try signing in if you already confirmed your email.</p>}
+      {authStatus === 'google-cancelled' && <p className="account-feedback" role="status">Google sign-in was cancelled. You can try again or use email.</p>}
+      {authStatus === 'google-failed' && <p className="account-feedback field-error" role="alert">Google sign-in couldn’t finish. Try again in this browser or use email.</p>}
       {register && confirmEmail ? <div className="account-feedback form-success" role="status">
-        <p>Open the confirmation link in your email, then return here and sign in.</p>
+        <p>Check <strong>{confirmEmail}</strong> for your confirmation link. After confirming, you can sign in with your password.</p>
       </div> : <>
         <div className="account-provider">
           <button className="button button-outline w-full" type="button" onClick={continueWithGoogle} disabled={busy !== null}>
