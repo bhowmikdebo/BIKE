@@ -6,6 +6,7 @@ import { useAuth } from '../hooks/auth'
 import { useFavorites } from '../hooks/favorites'
 import { errorMessage } from '../utils/api'
 import { searchString } from '../../../shared/rental.ts'
+import { ThemePicker } from './ThemePicker'
 import { Dialog, Wordmark } from './ui'
 
 const links = [
@@ -42,6 +43,7 @@ function Navbar() {
         <NavLink key={link.to} to={link.to} end={link.to === '/'}>{link.label}</NavLink>)}<NavLink to="/host">{hostLabel}</NavLink></nav>
       <div className="nav-actions">
         <Link className="icon-button saved-link" aria-label={`Saved bikes${ids.length ? `, ${ids.length} saved` : ''}`} to="/bikes?saved=1"><Heart size={19} />{ids.length > 0 && <span>{ids.length}</span>}</Link>
+        <ThemePicker />
         {account ? <><Link className="text-button desktop-signin" to={portal}>{portalLabel}</Link><button className="text-button desktop-signin" onClick={leave}>Sign Out</button></> :
           <Link className="text-button desktop-signin" to="/sign-in">Sign In</Link>}
         <Link className="button primary nav-cta" to="/bikes">Rent a Bike</Link>
