@@ -4,12 +4,15 @@
 .account-wrap { padding-block: clamp(32px, 7vw, 85px); }
 .account-panel { max-width: 460px; margin: 0 auto; }
 .account-panel h1 { font-size: clamp(2.15rem, 6vw, 3.35rem); margin-block: 6px 12px; }
-.account-panel > p:not(.eyebrow, .form-success) { color: var(--muted); }
+.account-panel > p:not(.eyebrow, .form-success, .field-error) { color: var(--muted); }
 .account-panel form { margin-top: 19px; }
 .account-panel .account-switch { margin-top: 15px; font-size: .9375rem; }
 .account-switch a, .forgot-password-link { color: var(--accent-text); font-weight: 700; text-decoration: underline; }
 .contact-form .forgot-password-link { width: auto; justify-self: end; font-size: .875rem; }
 .account-panel .account-feedback { margin-top: 15px; }
+.account-provider { display: grid; gap: 11px; margin-top: 19px; }
+.account-divider { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: .875rem; }
+.account-divider::before, .account-divider::after { content: ""; height: 1px; flex: 1; background: var(--line); }
 .field small { color: var(--muted); font-size: .8125rem; }
 .portal-content { padding-block: 25px 66px; }
 .portal-content .form-success { margin-bottom: 14px; }
