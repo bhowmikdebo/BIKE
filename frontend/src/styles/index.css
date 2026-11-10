@@ -14,8 +14,6 @@
 :root {
   color: var(--ink);
   background: var(--paper);
-  --orange: var(--accent);
-  --orange-dark: var(--accent-text);
   font-family: "Inter Variable", sans-serif;
   --font-heading: "Space Grotesk Variable", sans-serif;
   --gutter: clamp(20px, 4.2vw, 64px);

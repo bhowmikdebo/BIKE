@@ -21,6 +21,9 @@ import { Home } from './pages/Home'
 import { Host } from './pages/Host'
 import { ForgotPassword, ResetPassword } from './pages/PasswordRecovery'
 import { Storefront } from './pages/Storefront'
+import { applyTheme, savedTheme } from './utils/theme'
+
+applyTheme(savedTheme())
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
