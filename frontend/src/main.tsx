@@ -35,8 +35,8 @@ createRoot(document.getElementById('root')!).render(
             <Route path="bikes" element={<Explore />} />
             <Route path="bikes/:id" element={<Details />} />
             <Route path="booking/:id" element={<Booking />} />
-            <Route path="sign-in" element={<AccountPage />} />
-            <Route path="register" element={<AccountPage register />} />
+            <Route path="sign-in" element={<AccountPage key="sign-in" />} />
+            <Route path="register" element={<AccountPage key="register" register />} />
             <Route path="forgot-password" element={<ForgotPassword />} />
             <Route path="reset-password" element={<ResetPassword />} />
             <Route path="my-bookings" element={<PortalGuard role="customer"><MyBookings /></PortalGuard>} />
