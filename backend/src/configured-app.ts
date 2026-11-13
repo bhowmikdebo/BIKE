@@ -3,8 +3,12 @@ import { createSupabaseGateway } from './supabase.ts'
 
 export function configuredApp(frontendDir = '') {
   const env = process.env
-  const originUrl = env.RIDEON_ORIGIN
+  const vercelHost = env.VERCEL_ENV === 'preview' ? env.VERCEL_URL : env.VERCEL_PROJECT_PRODUCTION_URL
+  const fallbackOrigin = vercelHost ? `https://${vercelHost}` : ''
+  const originUrl = env.RIDEON_ORIGIN || fallbackOrigin
   const origin = originUrl ? new URL(originUrl).origin : ''
+  const vercel = env.VERCEL === '1'
+  if (vercel && !origin.startsWith('https://')) throw new Error('Set RIDEON_ORIGIN to the public HTTPS deployment URL.')
 
   const url = env.SUPABASE_URL
   const key = env.SUPABASE_PUBLISHABLE_KEY
