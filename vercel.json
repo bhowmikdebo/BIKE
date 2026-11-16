@@ -1,0 +1,21 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "npx --yes pnpm@11.25.0 install --frozen-lockfile",
+  "buildCommand": "npx --yes pnpm@11.25.0 build",
+  "outputDirectory": "frontend/dist",
+  "rewrites": [
+    { "source": "/api/:path(.*)", "destination": "/api/rideon?__rideon_path=:path" },
+    { "source": "/((?!api(?:/|$)|assets/|images/|favicon\\.png$).*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/((?!api(?:/|$)|assets/|images/).*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "same-origin" },
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https: data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" }
+      ]
+    }
+  ]
+}
