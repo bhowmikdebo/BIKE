@@ -1,5 +1,6 @@
 import express from 'express'
 import type { ErrorRequestHandler, Request, Response } from 'express'
+import { isIP } from 'node:net'
 import { extname, resolve } from 'node:path'
 import { createSessionManager } from './auth.ts'
 import { mountAccountEntry } from './auth-entry.ts'
@@ -22,7 +23,7 @@ function saveInput(body: unknown) {
   return { ...bike, image: { mime: file.mime, data: file.data.toString('base64') } }
 }
 
-export function createApp(gateway: SupabaseGateway, { origin = '', frontendDir = '' } = {}) {
+export function createApp(gateway: SupabaseGateway, { origin = '', frontendDir = '', vercel = false } = {}) {
   const app = express()
   const router = express.Router()
   const sessions = createSessionManager(gateway, origin.startsWith('https://'))
@@ -43,7 +44,8 @@ export function createApp(gateway: SupabaseGateway, { origin = '', frontendDir =
   })
 
   function limitAuthentication(request: Request) {
-    const ip = request.socket.remoteAddress || 'unknown'
+    const edgeIp = vercel ? request.get('x-vercel-forwarded-for') : undefined
+    const ip = edgeIp && isIP(edgeIp) ? edgeIp : request.socket.remoteAddress || 'unknown'
     const now = Date.now()
     for (const [key, entry] of attempts) if (entry.until <= now) attempts.delete(key)
     const attempt = attempts.get(ip) ?? { count: 0, until: now + 600_000 }

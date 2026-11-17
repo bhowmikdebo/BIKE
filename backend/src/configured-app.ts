@@ -18,5 +18,5 @@ export function configuredApp(frontendDir = '') {
   if (supabaseUrl.protocol !== 'https:' && !['127.0.0.1', 'localhost'].includes(supabaseUrl.hostname)) {
     throw new Error('Use an HTTPS URL for a hosted Supabase project.')
   }
-  return createApp(createSupabaseGateway({ url, key }), { origin, frontendDir })
+  return createApp(createSupabaseGateway({ url, key }), { origin, frontendDir, vercel })
 }
