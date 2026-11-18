@@ -24,9 +24,9 @@ Open [the website](http://127.0.0.1:5173). The root development command runs Vit
 
 The migrations in `backend/supabase/migrations/` create a private Postgres schema and seed eight RIDEON-managed listings. Postgres checks that a booking belongs to the current rider or host as appropriate. It prevents overlapping reservations and checks host calendar blocks before accepting a request. Each reservation records the price and provider at submission.
 
-Riders sign up and sign in through Supabase Auth. If email confirmation is enabled, the rider opens the confirmation email and signs in afterward. Set your Site URL and allowed redirect URLs in Supabase Authentication settings. To use a specific confirmation landing page, set `SUPABASE_EMAIL_REDIRECT` in the backend environment to an allowed URL such as `http://127.0.0.1:5173/sign-in`.
+Riders and hosts can use email and password or Google. With email confirmation enabled, opening the confirmation link in the signup browser also signs the user in. The email address can still be confirmed from another device, where the user can then sign in with their password.
 
-Use **Forgot password?** on the sign-in page to request a reset link. Open the email link in the same browser you used to request it. In Supabase Auth’s Redirect URLs, allow the app origin followed by `/api/auth/recovery/callback`, for example `http://127.0.0.1:5173/api/auth/recovery/callback` for Vite.
+Use **Forgot password?** on the sign-in page to request a reset link. Open that link in the browser that requested it. For local email and Google testing, add the callback paths listed below using `http://127.0.0.1:5173` as the origin. Open the app at that same address while testing.
 
 ### Rent a bike
 
@@ -66,6 +66,21 @@ pnpm build
 pnpm start
 ```
 
-The built website is served by Express at [http://127.0.0.1:4173](http://127.0.0.1:4173). Serve the frontend and `/api` under the same public origin. For an HTTPS reverse proxy, set `RIDEON_ORIGIN` to that public origin to enforce same-origin requests and Secure session cookies.
+The built website is served by Express at [http://127.0.0.1:4173](http://127.0.0.1:4173). Set `RIDEON_ORIGIN` to the public HTTPS origin when hosting behind a reverse proxy. The frontend and `/api` share that origin.
+
+### Deploy on Vercel
+
+1. Push the version you want to deploy, then open [Vercel’s New Project page](https://vercel.com/new) and import `bhowmikdebo/BIKE`. Keep **Root Directory** at the repository root and use Node.js **24.x**. The checked-in `vercel.json` builds the frontend, serves React routes, and sends `/api` requests to Express.
+2. In **Settings → Environment Variables**, add `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` from the Supabase project’s **Connect** dialog for Production. Deploy and copy the production URL from **Domains**. Use that domain to open RIDEON. Vercel’s production domain is used automatically when its system variables are exposed. You can pin it with `RIDEON_ORIGIN=https://your-domain.vercel.app` in the Production environment, then redeploy.
+3. In [Supabase Auth URL Configuration](https://supabase.com/dashboard/project/ejlzogpbapsjboxmziej/auth/url-configuration), set **Site URL** to the production origin. Add all three production **Redirect URLs** below, replacing the example domain with yours. Keep any local callbacks you still use. The confirmation and reset email templates should link to `{{ .ConfirmationURL }}` so Supabase can apply the matching redirect URL.
+
+   ```text
+   https://your-domain.vercel.app/api/auth/email/callback
+   https://your-domain.vercel.app/api/auth/recovery/callback
+   https://your-domain.vercel.app/api/auth/google/callback
+   ```
+
+4. To enable Google, create a **Web application** OAuth client in Google Auth Platform. Set its authorized JavaScript origin to your production URL. Under **Authorized redirect URIs**, paste `https://ejlzogpbapsjboxmziej.supabase.co/auth/v1/callback`. Enable Google in [Supabase Auth Providers](https://supabase.com/dashboard/project/ejlzogpbapsjboxmziej/auth/providers) and enter the client ID and client secret there. If the Google consent screen is in Testing, add your test accounts before trying the sign-in flow. [Supabase Google setup](https://supabase.com/docs/guides/auth/social-sign-in/auth-google)
+5. Test signup, password reset, and Google sign-in on the production URL with fresh links. If you use Supabase’s default mail service, configure [custom SMTP](https://supabase.com/docs/guides/auth/auth-smtp) before inviting customers so email confirmation and reset links can be delivered to users outside your Supabase team.
 
 `pnpm test` checks the Express routes with an isolated Supabase gateway double. The rollback-only SQL tests in `backend/tests/` exercise Postgres booking conflicts, host isolation, public storefronts, availability blocks, and contact privacy.
